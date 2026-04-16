@@ -67,7 +67,10 @@ function importQuizData(jsonData) {
         const store = transaction.objectStore('questions');
         let count = 0;
 
+        const domains = jsonData.domains || [];
+
         jsonData.quizzes.forEach(quiz => {
+            const tags = quiz.tags || [];
             quiz.questions.forEach(q => {
                 // Handle typo in original JSON
                 const qId = q.quesiton_id || q.question_id; 
@@ -75,6 +78,8 @@ function importQuizData(jsonData) {
                     id: `${quiz.quiz_id}_${qId}`,
                     quiz_id: quiz.quiz_id,
                     quiz_title: quiz.title,
+                    domains: domains,
+                    tags: tags,
                     ...q
                 };
                 store.put(record);
@@ -95,8 +100,8 @@ function checkAndLoadInitialData() {
 
         request.onsuccess = () => {
             if (request.result === 0) {
-                // DB is empty, load default AWS questions
-                fetch('questions.json')
+                // DB is empty, load default questions
+                fetch('questions-bank/AWS/AWS_CLF-C02.json')
                     .then(res => res.json())
                     .then(data => importQuizData(data))
                     .then(count => {
@@ -179,7 +184,7 @@ function renderNavbar() {
             const activeId = parseInt(urlParams.get('id'));
             const isActive = activeId === quiz.id;
 
-            a.href = `quiz.html?id=${quiz.id}`;
+            a.href = `quiz.html?id=${quiz.id}#id=${quiz.id}`;
             a.className = `flex items-center space-x-3 px-4 py-3 rounded-xl transition-all group ${
                 isActive 
                 ? 'bg-primary text-on-primary shadow-lg shadow-primary/20' 
@@ -202,7 +207,7 @@ function updateContinueButton(selectedId) {
     if (!btn) return;
 
     if (selectedId) {
-        btn.href = `quiz.html?id=${selectedId}`;
+        btn.href = `quiz.html?id=${selectedId}#id=${selectedId}`;
         btn.classList.remove('opacity-50', 'cursor-not-allowed', 'pointer-events-none');
         btn.classList.add('shadow-primary/40');
         btn.title = "Jump back into your module";
@@ -230,6 +235,25 @@ function renderQuizShortcuts() {
 
         wrapper.classList.remove('hidden');
         shortcutsContainer.innerHTML = '';
+        
+        // Fun Mode Card
+        const funCard = document.createElement('div');
+        funCard.className = `group block p-5 rounded-2xl border-2 border-transparent bg-gradient-to-br from-primary to-secondary-container text-on-primary-container shadow-xl shadow-primary/20 transition-all animate-in zoom-in-95 duration-500 scale-100 active:scale-95 cursor-pointer`;
+        funCard.innerHTML = `
+            <div class="flex items-start justify-between mb-4">
+                <div class="p-2.5 rounded-xl bg-white/40 text-on-primary-container backdrop-blur-sm group-hover:rotate-12 transition-transform">
+                    <span class="material-symbols-outlined text-[20px]">cruelty_free</span>
+                </div>
+                <span class="text-[10px] font-bold uppercase tracking-widest opacity-80">Special Mode</span>
+            </div>
+            <h4 class="font-bold text-on-primary-container leading-tight transition-colors line-clamp-2">Fun Mode (Random 10)</h4>
+            <div class="mt-4 flex items-center text-[10px] font-bold uppercase tracking-widest text-on-primary-container opacity-80 group-hover:opacity-100 transition-all translate-y-2 group-hover:translate-y-0">
+                <span>Start Playing</span>
+                <span class="material-symbols-outlined text-[14px] ml-1">arrow_forward</span>
+            </div>
+        `;
+        funCard.onclick = () => window.location.href = 'quiz.html?mode=fun#mode=fun';
+        shortcutsContainer.appendChild(funCard);
         
         quizzes.forEach(quiz => {
             const card = document.createElement('div');

@@ -4,7 +4,10 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Naive Quiz - Master Your AWS Skills</title>
+    <title>Naive Quiz - Prepare for Any Certificate Interactively</title>
+    <meta name="theme-color" content="#ffffff">
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/png" href="./img/logo.png">
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
     <link
         href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@700;800&family=Lexend:wght@300;400;500;600&display=swap"
@@ -14,6 +17,7 @@
     <script>
         tailwind.config = {
             darkMode: "class",
+            future: { hoverOnlyWhenSupported: true },
             theme: {
                 extend: {
                     colors: {
@@ -39,6 +43,17 @@
     <style>
         body {
             font-family: 'Lexend', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+        }
+
+        /* Safe areas for notched mobile devices */
+        .safe-pt {
+            padding-top: env(safe-area-inset-top);
+        }
+
+        .safe-pb {
+            padding-bottom: env(safe-area-inset-bottom);
         }
 
         h1,
@@ -91,7 +106,7 @@
 
     <!-- Sidebar -->
     <aside id="sidebar"
-        class="fixed top-0 left-0 bottom-0 w-72 bg-white border-r border-surface-container-highest z-50 sidebar-transition">
+        class="fixed top-0 left-0 bottom-0 w-72 bg-white border-r border-surface-container-highest z-50 sidebar-transition safe-pt safe-pb">
         <div class="flex flex-col h-full">
             <!-- Sidebar Header -->
             <div class="p-6 border-b border-surface-container-highest flex items-center justify-between">
@@ -115,11 +130,11 @@
         </div>
     </aside>
 
-    <main id="main-container" class="min-h-screen flex flex-col pt-16 lg:pt-0">
+    <main id="main-container" class="min-h-[100dvh] flex flex-col pt-[calc(4rem+env(safe-area-inset-top))] lg:pt-0">
 
         <!-- Top Bar -->
         <header
-            class="fixed top-0 left-0 right-0 h-16 bg-white/80 backdrop-blur-md border-b border-surface-container-highest z-30 flex items-center px-4 lg:px-8 justify-between">
+            class="fixed top-0 left-0 right-0 h-[calc(4rem+env(safe-area-inset-top))] safe-pt bg-white/80 backdrop-blur-md border-b border-surface-container-highest z-30 flex items-center px-4 lg:px-8 justify-between">
             <div class="flex items-center space-x-4">
                 <button id="sidebar-toggle"
                     class="p-2 hover:bg-surface-container-highest rounded-full text-on-surface-variant transition-colors group">
@@ -133,28 +148,27 @@
             </div>
         </header>
 
-        <div class="flex-1 flex flex-col items-center justify-center p-6 sm:p-12">
+        <div class="flex-1 flex flex-col items-center justify-center p-6 sm:p-12 safe-pb">
             <div
-                class="max-w-4xl w-full flex flex-col items-center text-center space-y-8 animate-in fade-in duration-700">
+                class="max-w-4xl w-full flex flex-col items-center text-center space-y-8 animate-in fade-in duration-500">
 
                 <!-- Hero logo -->
                 <div class="relative group">
                     <div
                         class="absolute -inset-1 bg-gradient-to-r from-primary/20 to-secondary-container/20 rounded-full blur opacity-25 group-hover:opacity-50 transition duration-1000">
                     </div>
-                    <img src="img/logo.png" alt="AWS Logo"
+                    <img src="img/logo.png" alt="Quiz Logo"
                         class="relative w-48 h-auto drop-shadow-xl transform group-hover:scale-105 transition-transform duration-500">
                 </div>
 
                 <!-- Header Text -->
                 <div class="space-y-4">
                     <h1 class="text-4xl sm:text-6xl text-inverse-surface tracking-tight leading-tight">
-                        Master Your <span class="text-primary italic">AWS Practitioner</span> Certification
+                        Learn Anything <span class="text-primary italic">Interactively</span>
                     </h1>
                     <p class="text-lg sm:text-xl font-light max-w-2xl mx-auto leading-relaxed">
-                        A intelligent quiz platform designed to help you ace the <span
-                            class="font-semibold px-2 py-0.5 bg-primary-container text-on-primary-container rounded-md">CLF-C02</span>
-                        exam through spaced repetition and the Feynman technique.
+                        A naive offline quiz app built to help you master new topics using spaced repetition and the
+                        Feynman technique. Load your own JSON quizzes.
                     </p>
 
                     <!-- NEW: Primary Continue Button -->
@@ -232,48 +246,57 @@
 
                                 <div id="prompt-template"
                                     class="text-xs font-mono text-left leading-relaxed opacity-80 h-32 overflow-y-auto scrollbar-hide pr-2 select-all">
-                                    Act as an Expert Educator and JSON Architect. Use the provided book sources as your primary knowledge base.
+                                    Act as an Expert Educator and JSON Architect. Use the provided book sources as your
+                                    primary knowledge base.
 
-Goal: Generate a comprehensive JSON quiz based ONLY on the attached sources.
+                                    Goal: Generate a comprehensive JSON quiz based ONLY on the attached sources.
 
-Parameters:
-- Topic/Chapters: {{TOPIC}}
-- Difficulty: {{DIFFICULTY}} (1=Easy, 10=Expert)
-- Style: {{STYLE}}
+                                    Parameters:
+                                    - Topic/Chapters: {{TOPIC}}
+                                    - Difficulty: {{DIFFICULTY}} (1=Easy, 10=Expert)
+                                    - Style: {{STYLE}}
 
-Evaluation Protocol (MANDATORY):
-1. **Source Mapping:** For every question, identify the exact page/paragraph in the source.
-2. **Answer Verification:** Double-check that the 'correct_answer_id' points to an option that is EXPLICITLY supported by the text.
-3. **Plausible Distractors:** Generate wrong options that look correct but contain subtle errors present in misconceptions.
-4. **Mandatory Field Check:** Every question MUST have a 'correct_answer_id' (or an array for multiple choice) and an 'explanation'.
+                                    Evaluation Protocol (MANDATORY):
+                                    1. **Source Mapping:** For every question, identify the exact page/paragraph in the
+                                    source.
+                                    2. **Answer Verification:** Double-check that the 'correct_answer_id' points to an
+                                    option that is EXPLICITLY supported by the text.
+                                    3. **Plausible Distractors:** Generate wrong options that look correct but contain
+                                    subtle errors present in misconceptions.
+                                    4. **Mandatory Field Check:** Every question MUST have a 'correct_answer_id' (or an
+                                    array for multiple choice) and an 'explanation'.
 
-JSON Schema:
-{
-  "quizzes": [{
-    "quiz_id": 1,
-    "title": "Module Title",
-    "questions": [{
-      "question_id": 1,
-      "question_text": "...",
-      "options": [
-        { "option_id": 1, "option_text": "..." }
-      ],
-      "correct_answer_id": 1, 
-      "explanation": "Brief reasoning for the correct answer, citing the source if possible."
-    }]
-  }]
-}
+                                    JSON Schema:
+                                    {
+                                    "domains": ["Primary Subject/Domain"],
+                                    "quizzes": [{
+                                    "quiz_id": 1,
+                                    "title": "Module Title",
+                                    "tags": ["Concept1", "Concept2"],
+                                    "questions": [{
+                                    "question_id": 1,
+                                    "question_text": "...",
+                                    "options": [
+                                    { "option_id": 1, "option_text": "..." }
+                                    ],
+                                    "correct_answer_id": 1,
+                                    "explanation": "Brief reasoning for the correct answer, citing the source if
+                                    possible."
+                                    }]
+                                    }]
+                                    }
 
-Instructions:
-- Provide ONLY raw JSON. No markdown backticks, no header/footer.
-- If multiple answers are correct, 'correct_answer_id' MUST be an array: [1, 2].
-- Ensure high concept density and strictly technical language from the source.
+                                    Instructions:
+                                    - Provide ONLY raw JSON. No markdown backticks, no header/footer.
+                                    - If multiple answers are correct, 'correct_answer_id' MUST be an array: [1, 2].
+                                    - Ensure high concept density and strictly technical language from the source.
                                 </div>
 
                                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                     <button id="copyPromptBtn"
                                         class="flex items-center justify-center space-x-2 w-full py-3 bg-inverse-surface text-surface rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-inverse-surface/90 transition-all group overflow-hidden relative">
-                                        <span id="copyText" class="relative z-10 transition-transform duration-300">Copy Template</span>
+                                        <span id="copyText" class="relative z-10 transition-transform duration-300">Copy
+                                            Template</span>
                                         <span id="copyIcon"
                                             class="material-symbols-outlined text-[18px] relative z-10">content_copy</span>
                                         <div id="copySuccessBg"
@@ -283,7 +306,9 @@ Instructions:
 
                                     <button id="copyFineTuneBtn"
                                         class="flex items-center justify-center space-x-2 w-full py-3 bg-primary/10 text-primary rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-primary/20 transition-all group overflow-hidden relative border border-primary/20">
-                                        <span id="copyFineTuneText" class="relative z-10 transition-transform duration-300">Copy Fine-Tuner</span>
+                                        <span id="copyFineTuneText"
+                                            class="relative z-10 transition-transform duration-300">Copy
+                                            Fine-Tuner</span>
                                         <span id="copyFineTuneIcon"
                                             class="material-symbols-outlined text-[18px] relative z-10">auto_fix_high</span>
                                         <div id="copyFineTuneSuccessBg"
@@ -326,19 +351,19 @@ Instructions:
                     <!-- Footer links -->
                     <div class="flex items-center space-x-6 text-sm font-medium opacity-60 pt-4">
                         <a href="#" class="hover:text-primary flex items-center space-x-1 uppercase tracking-wider">
-                            <span class="material-symbols-outlined text-sm">coffee</span>
-                            <span>Buy me a coffee</span>
+                            <span class="material-symbols-outlined text-sm">Banh Mi</span>
+                            <span>Buy me a Banh Mi</span>
                         </a>
                         <span class="w-1 h-1 bg-on-surface-variant rounded-full opacity-20"></span>
-                        <span class="uppercase tracking-wider">v1.2.0 Modernized</span>
+                        <span class="uppercase tracking-wider">v1.0.0</span>
                     </div>
 
                 </div>
             </div>
     </main>
 
-    <script src="sm2.js"></script>
-    <script src="db.js"></script>
+    <script src="sm2.js?v=3"></script>
+    <script src="db.js?v=3"></script>
     <script>
         // Sidebar Initialization
         const toggleBtn = document.getElementById('sidebar-toggle');
@@ -359,6 +384,33 @@ Instructions:
                 localStorage.setItem('sidebarExpanded', body.classList.contains('sidebar-expanded'));
             }
         }
+
+        // Swipe Gestures for Mobile Sidebar
+        let touchStartX = 0;
+        let touchEndX = 0;
+
+        function handleSwipe() {
+            const SWIPE_THRESHOLD = 50;
+            const EDGE_THRESHOLD = 30; // pixels from left edge to start swipe-open
+            const isExpanded = body.classList.contains('sidebar-expanded');
+
+            if (touchEndX < touchStartX - SWIPE_THRESHOLD && isExpanded) {
+                // Swipe left to close
+                body.classList.remove('sidebar-expanded');
+            } else if (touchEndX > touchStartX + SWIPE_THRESHOLD && !isExpanded && touchStartX <= EDGE_THRESHOLD) {
+                // Swipe right from the left edge to open
+                body.classList.add('sidebar-expanded');
+            }
+        }
+
+        document.addEventListener('touchstart', e => {
+            touchStartX = e.changedTouches[0].screenX;
+        }, { passive: true });
+
+        document.addEventListener('touchend', e => {
+            touchEndX = e.changedTouches[0].screenX;
+            handleSwipe();
+        }, { passive: true });
 
         toggleBtn?.addEventListener('click', toggleSidebar);
         closeBtn?.addEventListener('click', () => body.classList.remove('sidebar-expanded'));
@@ -447,7 +499,7 @@ Instructions:
         const copyFineTuneText = document.getElementById('copyFineTuneText');
         const copyFineTuneIcon = document.getElementById('copyFineTuneIcon');
         const copyFineTuneSuccessBg = document.getElementById('copyFineTuneSuccessBg');
-        
+
         const FINE_TUNE_PROMPT = `Act as an Expert Content Auditor and JSON Engineer. 
 
 Goal: Process the provided quiz JSON and verify it against the attached source material (notebook sources).

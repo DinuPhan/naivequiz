@@ -22,7 +22,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let currentSelectedAnswers = [];
     let currentSelectedAnswersAll = [];
-    
+
     let currentCorrectAnsArr = [];
     let currentCorrectAnsArrAll = [];
 
@@ -37,17 +37,35 @@ document.addEventListener('DOMContentLoaded', () => {
     function loadQuizMetadataAndQuestions() {
         return new Promise((resolve, reject) => {
             const urlParams = new URLSearchParams(window.location.search);
-            const targetQuizId = parseInt(urlParams.get('id')) || 1;
+            const hashParams = new URLSearchParams(window.location.hash.substring(1));
+
+            const targetQuizId = parseInt(urlParams.get('id') || hashParams.get('id')) || 1;
+            const mode = urlParams.get('mode') || hashParams.get('mode');
 
             const transaction = db.transaction(['questions'], 'readonly');
             const store = transaction.objectStore('questions');
             const request = store.getAll();
-            
+
             request.onsuccess = () => {
                 const allData = request.result;
-                questions = allData.filter(q => q.quiz_id == targetQuizId);
-                currentQuizId = targetQuizId;
-                
+                let quizTitle = "";
+
+                if (mode === 'fun') {
+                    // Properly shuffle using Fisher-Yates and pick 10
+                    const shuffled = [...allData];
+                    for (let i = shuffled.length - 1; i > 0; i--) {
+                        const j = Math.floor(Math.random() * (i + 1));
+                        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+                    }
+                    questions = shuffled.slice(0, 10);
+                    currentQuizId = 'fun';
+                    quizTitle = "Fun Mode (Random 10)";
+                } else {
+                    questions = allData.filter(q => q.quiz_id == targetQuizId);
+                    currentQuizId = targetQuizId;
+                    quizTitle = questions.length > 0 ? (questions[0].quiz_title || "Quiz " + targetQuizId) : "Quiz " + targetQuizId;
+                }
+
                 if (questions.length === 0) {
                     const titleElem = document.getElementById('quiz-title');
                     if (titleElem) titleElem.innerText = "Quiz not found!";
@@ -55,9 +73,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     return reject("No questions found for this ID");
                 }
 
-                const quizTitle = questions[0].quiz_title || "Quiz " + targetQuizId;
                 const totalQuestions = questions.length;
-                const passingMarks = Math.ceil(totalQuestions * 0.7); 
+                const passingMarks = Math.ceil(totalQuestions * 0.7);
 
                 // Update UI
                 if (document.getElementById('page-title')) document.getElementById('page-title').innerText = quizTitle;
@@ -94,7 +111,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     nextBtn.addEventListener('click', loadNextQuestion);
-    
+
     function loadNextQuestion() {
         if (currentQuestionIndex < questions.length - 1) {
             let randomIndex;
@@ -130,14 +147,14 @@ document.addEventListener('DOMContentLoaded', () => {
             const button = document.createElement("button");
             button.className = "group w-full min-h-[64px] flex items-center px-6 py-4 rounded-3xl border-2 border-surface-container-highest bg-white hover:border-primary/40 hover:bg-primary/5 transition-all text-left space-x-4 animate-in fade-in slide-in-from-bottom-2 duration-300";
             button.style.animationDelay = `${index * 100}ms`;
-            
+
             button.innerHTML = `
                 <span class="flex-shrink-0 w-8 h-8 rounded-lg bg-surface-container-highest text-on-surface-variant font-bold flex items-center justify-center group-hover:bg-primary group-hover:text-on-primary transition-all uppercase text-sm">${labels[index] || index + 1}</span>
                 <span class="flex-1 text-sm font-medium leading-relaxed">${option.option_text}</span>
             `;
-            
+
             answerButtons.appendChild(button);
-            
+
             if (Array.isArray(question.correct_answer_id)) {
                 if (question.correct_answer_id.includes(option.option_id)) {
                     button.dataset.correct = true;
@@ -158,7 +175,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function selectAnswer(e) {
         const selectedBtn = e.currentTarget;
         const isCorrect = selectedBtn.dataset.correct === "true";
-        
+
         // Prevent double selecting same button
         if (selectedBtn.disabled) return;
         selectedBtn.disabled = true;
@@ -188,7 +205,9 @@ document.addEventListener('DOMContentLoaded', () => {
         else if (!twoanswers && !threeanswers && selectedAnswers.length === 1) questionComplete = true;
 
         if (questionComplete) {
-            // Disable all other buttons
+            const currentQAll = questions[questionHistory[currentQuestionIndex]];
+
+            // Disable all other buttons and inject AI shortcut
             Array.from(answerButtons.children).forEach(button => {
                 button.disabled = true;
                 // Reveal correct answers if not already selected
@@ -196,6 +215,49 @@ document.addEventListener('DOMContentLoaded', () => {
                     button.classList.replace('border-surface-container-highest', 'border-success/40');
                     button.children[0].classList.replace('bg-surface-container-highest', 'bg-success/40');
                 }
+
+                // Add AI Shortcut button
+                const optionText = button.children[1].innerText;
+                const isCorrectOpt = button.dataset.correct === "true";
+
+                const aiBtn = document.createElement('button');
+                aiBtn.className = "ml-auto p-2 rounded-xl bg-surface-container-highest text-primary hover:bg-primary/20 transition-colors z-10 flex-shrink-0 group/ai relative hover:scale-110 active:scale-95";
+                aiBtn.innerHTML = `
+                    <span class="material-symbols-outlined text-[18px]">psychology_alt</span>
+                    <span class="absolute right-0 top-full mt-2 w-max px-2 py-1 bg-inverse-surface text-surface text-[10px] uppercase font-bold tracking-widest rounded opacity-0 group-hover/ai:opacity-100 transition-opacity pointer-events-none">Ask AI</span>
+                `;
+                aiBtn.onclick = (event) => {
+                    event.stopPropagation();
+                    event.preventDefault();
+
+                    const domainCtx = currentQAll.domains && currentQAll.domains.length ? `\nDomain: ${currentQAll.domains.join(', ')}` : '';
+                    const tagsCtx = currentQAll.tags && currentQAll.tags.length ? `\nTags: ${currentQAll.tags.join(', ')}` : '';
+
+                    const prompt = `Act as an expert Tutor.${domainCtx}${tagsCtx}
+Question: ${currentQAll.question_text}
+
+Options:
+${Array.from(answerButtons.children).map(b => '- ' + b.children[1].innerText).join('\n')}
+
+My Selected Answer: ${currentSelectedAnswers.join(', ') || 'None'}
+The Option In Question: ${optionText}
+Is it Correct?: ${isCorrectOpt ? 'Yes' : 'No'}
+
+Please explain clearly and concisely why this option is correct or incorrect based on core concepts and best practices.`;
+
+                    navigator.clipboard.writeText(prompt).then(() => {
+                        const tip = aiBtn.querySelector('.absolute');
+                        tip.innerText = "Copied!";
+                        tip.classList.add('opacity-100', 'text-success');
+                        aiBtn.classList.replace('bg-surface-container-highest', 'bg-primary/20');
+                        setTimeout(() => {
+                            tip.innerText = "Ask AI";
+                            tip.classList.remove('opacity-100', 'text-success');
+                            aiBtn.classList.replace('bg-primary/20', 'bg-surface-container-highest');
+                        }, 2000);
+                    });
+                };
+                button.appendChild(aiBtn);
             });
 
             let result = "Wrong";
@@ -216,8 +278,8 @@ document.addEventListener('DOMContentLoaded', () => {
             // Show explanation if available in data
             const explanationContainer = document.getElementById('explanation-container');
             const explanationText = document.getElementById('explanation-text');
-            const currentQAll = questions[questionHistory[currentQuestionIndex]];
-            
+
+
             if (explanationContainer && explanationText && currentQAll.explanation) {
                 explanationText.innerText = currentQAll.explanation;
                 explanationContainer.classList.remove('hidden');
@@ -227,7 +289,7 @@ document.addEventListener('DOMContentLoaded', () => {
             totalScore += currentScore;
             currentSelectedAnswersAll.push([...currentSelectedAnswers]);
             currentCorrectAnsArrAll.push([...currentCorrectAnsArr]);
-            
+
             const isWrong = result === "Wrong";
             const currentQ = questions[questionHistory[currentQuestionIndex]];
             const qId = `${currentQuizId || 'unknown'}_${currentQ.quesiton_id || currentQ.question_id}`;
@@ -240,19 +302,23 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 document.getElementById('save-feynman-btn').onclick = () => {
                     const explanation = document.getElementById('feynman-textarea').value;
-                    getProgress(qId).then(prevData => {
-                        const newData = calculateSM2(2, prevData);
-                        if (typeof saveProgress === 'function') saveProgress(qId, newData);
-                    });
+                    if (currentQuizId !== 'fun') {
+                        getProgress(qId).then(prevData => {
+                            const newData = calculateSM2(2, prevData);
+                            if (typeof saveProgress === 'function') saveProgress(qId, newData);
+                        });
+                    }
 
                     feynmanSection.classList.add('hidden');
                     nextBtn.classList.remove('hidden');
                 };
             } else {
-                getProgress(qId).then(prevData => {
-                    const newData = calculateSM2(4, prevData);
-                    if (typeof saveProgress === 'function') saveProgress(qId, newData);
-                });
+                if (currentQuizId !== 'fun') {
+                    getProgress(qId).then(prevData => {
+                        const newData = calculateSM2(4, prevData);
+                        if (typeof saveProgress === 'function') saveProgress(qId, newData);
+                    });
+                }
                 nextBtn.classList.remove('hidden');
             }
         }
@@ -262,21 +328,11 @@ document.addEventListener('DOMContentLoaded', () => {
         resetState();
         quizApp.classList.add('hidden');
         document.getElementById('quiz-progress-container')?.classList.add('hidden');
-        
+
         const passingScore = Math.ceil(0.7 * questions.length);
         const hasPassed = totalScore >= passingScore;
-        
-        // Show view results button instead of immediate list
-        viewResultsBtn.classList.remove('hidden');
-        viewResultsBtn.onclick = showDetails;
 
-        // Custom restart logic on nextBtn if we want to reuse it
-        nextBtn.innerHTML = `<span>Retake Quiz</span><span class="material-symbols-outlined">restart_alt</span>`;
-        nextBtn.classList.remove('hidden');
-        nextBtn.onclick = () => window.location.reload();
-        
-        resultDiv.innerText = hasPassed ? `PASSED! You scored ${totalScore}/${questions.length}` : `FAILED. You scored ${totalScore}/${questions.length}`;
-        resultDiv.className = `text-center font-headline font-extrabold text-2xl h-auto py-8 ${hasPassed ? 'text-success' : 'text-error'}`;
+        showDetails(hasPassed, totalScore, questions.length);
     }
 
     function resetState() {
@@ -291,7 +347,7 @@ document.addEventListener('DOMContentLoaded', () => {
         selectedAnswers = [];
         currentSelectedAnswers = [];
         currentCorrectAnsArr = [];
-        
+
         // Clear and hide explanation
         const explanationContainer = document.getElementById('explanation-container');
         const explanationText = document.getElementById('explanation-text');
@@ -299,21 +355,46 @@ document.addEventListener('DOMContentLoaded', () => {
         if (explanationText) explanationText.innerText = '';
     }
 
-    function showDetails() {
+    function showDetails(hasPassed = null, finalScore = null, maxScore = null) {
         viewResultsBtn.classList.add('hidden');
+
+        const banner = document.getElementById('final-score-banner');
+        if (banner && finalScore !== null) {
+            banner.classList.remove('hidden');
+            const heading = document.getElementById('final-score-heading');
+            const subtext = document.getElementById('final-score-subtext');
+            if (hasPassed) {
+                banner.classList.add('border-success', 'bg-success/10', 'text-success');
+                heading.innerText = '🎉 Congratulations! You Passed!';
+                subtext.innerText = `You scored ${finalScore} out of ${maxScore}. Great job!`;
+                // Simple pulse animation
+                banner.classList.add('animate-pulse');
+                setTimeout(() => banner.classList.remove('animate-pulse'), 2000);
+            } else {
+                banner.classList.add('border-error', 'bg-error/10', 'text-error');
+                heading.innerText = 'Keep practicing!';
+                subtext.innerText = `You scored ${finalScore} out of ${maxScore}. Review the scorecard below to see where you can improve.`;
+            }
+        }
+
         const detailsTableBody = document.querySelector('#details-table tbody');
         detailsTableBody.innerHTML = '';
-    
+
         questionTextArr.forEach((question, index) => {
             const row = document.createElement('tr');
             row.className = "hover:bg-surface/50 transition-colors";
-            
+
             const isCorrect = correct_or_incorrect[index] === "Correct";
-            
+            const currentQAll = questions[questionHistory[index]];
+
             row.innerHTML = `
                 <td class="px-8 py-6">
                     <div class="font-bold text-inverse-surface leading-tight mb-1">${index + 1}. ${question}</div>
                     <div class="text-[10px] uppercase tracking-wider font-bold opacity-30">Analytical Review</div>
+                    <button class="mt-3 text-xs font-bold text-primary flex items-center space-x-1 hover:bg-primary/10 px-3 py-1.5 rounded-lg transition-colors border border-primary/20 copy-ai-btn">
+                        <span class="material-symbols-outlined text-[14px]">psychology_alt</span>
+                        <span>Ask AI</span>
+                    </button>
                 </td>
                 <td class="px-6 py-6 text-sm">
                     <div class="space-y-1">${currentSelectedAnswersAll[index].map(ans => `<p class="flex items-center space-x-2"><span class="w-1.5 h-1.5 rounded-full ${isCorrect ? 'bg-success' : 'bg-error'}"></span><span>${ans}</span></p>`).join('')}</div>
@@ -327,9 +408,31 @@ document.addEventListener('DOMContentLoaded', () => {
                     </span>
                 </td>
             `;
+
+            const btn = row.querySelector('.copy-ai-btn');
+            btn.onclick = () => {
+                const domainCtx = currentQAll.domains && currentQAll.domains.length ? `\nDomain: ${currentQAll.domains.join(', ')}` : '';
+                const tagsCtx = currentQAll.tags && currentQAll.tags.length ? `\nTags: ${currentQAll.tags.join(', ')}` : '';
+
+                const prompt = `Act as an expert Tutor.${domainCtx}${tagsCtx}\nQuestion: ${question}\n\nOptions:\n${currentQAll.options.map(o => '- ' + o.option_text).join('\n')}\n\nMy Selected Answer: ${currentSelectedAnswersAll[index].join(', ') || 'None'}\nCorrect Answer: ${currentCorrectAnsArrAll[index].join(', ')}\n\nPlease explain clearly and concisely why this is the correct answer based on core concepts and best practices.`;
+
+                navigator.clipboard.writeText(prompt).then(() => {
+                    const span = btn.querySelector('span:last-child');
+                    const origText = span.innerText;
+                    span.innerText = 'Copied!';
+                    btn.classList.replace('text-primary', 'text-success');
+                    btn.classList.replace('border-primary/20', 'border-success/40');
+                    setTimeout(() => {
+                        span.innerText = origText;
+                        btn.classList.replace('text-success', 'text-primary');
+                        btn.classList.replace('border-success/40', 'border-primary/20');
+                    }, 2000);
+                });
+            };
+
             detailsTableBody.appendChild(row);
         });
-    
+
         detailsSection.classList.remove('hidden');
         detailsSection.scrollIntoView({ behavior: 'smooth' });
     }

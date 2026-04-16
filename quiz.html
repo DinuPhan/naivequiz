@@ -4,12 +4,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title id="page-title">Loading Quiz... - Naive Quiz</title>
+    <meta name="theme-color" content="#ffffff">
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/png" href="./img/logo.png">
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@700;800&family=Lexend:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1" rel="stylesheet">
     <script>
         tailwind.config = {
             darkMode: "class",
+            future: { hoverOnlyWhenSupported: true },
             theme: {
                 extend: {
                     colors: {
@@ -35,8 +39,17 @@
         };
     </script>
     <style>
-        body { font-family: 'Lexend', sans-serif; }
+        body { 
+            font-family: 'Lexend', sans-serif; 
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+        }
         h1, h2, h3, h4 { font-family: 'Plus Jakarta Sans', sans-serif; }
+        
+        /* Safe areas for notched mobile devices */
+        .safe-pt { padding-top: env(safe-area-inset-top); }
+        .safe-pb { padding-bottom: env(safe-area-inset-bottom); }
+
         .sidebar-transition { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
         .option-btn.correct { border-color: #436700; background-color: #f0f4e8; }
         .option-btn.incorrect { border-color: #ba1a1a; background-color: #fff1f0; }
@@ -60,7 +73,7 @@
     <div id="sidebar-overlay" class="fixed inset-0 bg-black/40 backdrop-blur-sm z-40 hidden transition-opacity"></div>
 
     <!-- Sidebar -->
-    <aside id="sidebar" class="fixed top-0 left-0 bottom-0 w-72 bg-white border-r border-surface-container-highest z-50 sidebar-transition">
+    <aside id="sidebar" class="fixed top-0 left-0 bottom-0 w-72 bg-white border-r border-surface-container-highest z-50 sidebar-transition safe-pt safe-pb">
         <div class="flex flex-col h-full">
             <!-- Sidebar Header -->
             <div class="p-6 border-b border-surface-container-highest flex items-center justify-between">
@@ -92,10 +105,10 @@
     </aside>
 
     <!-- Main Content -->
-    <main id="main-container" class="min-h-screen flex flex-col pt-16 lg:pt-0">
+    <main id="main-container" class="min-h-[100dvh] flex flex-col pt-[calc(4rem+env(safe-area-inset-top))] lg:pt-0">
         
         <!-- Top Bar -->
-        <header class="fixed top-0 left-0 right-0 h-16 bg-white/80 backdrop-blur-md border-b border-surface-container-highest z-30 flex items-center px-4 lg:px-8 justify-between">
+        <header class="fixed top-0 left-0 right-0 h-[calc(4rem+env(safe-area-inset-top))] safe-pt bg-white/80 backdrop-blur-md border-b border-surface-container-highest z-30 flex items-center px-4 lg:px-8 justify-between">
             <div class="flex items-center space-x-4">
                 <button id="sidebar-toggle" class="p-2 hover:bg-surface-container-highest rounded-full text-on-surface-variant transition-colors group">
                     <span class="material-symbols-outlined group-hover:scale-110 transition-transform">menu</span>
@@ -115,10 +128,10 @@
         </header>
 
         <!-- Dynamic Page Container -->
-        <div class="flex-1 p-4 sm:p-8 lg:p-12 max-w-4xl mx-auto w-full">
+        <div class="flex-1 p-4 sm:p-8 lg:p-12 max-w-4xl mx-auto w-full safe-pb">
             
             <!-- Intro Section -->
-            <div id="intro-section" class="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 hidden">
+            <div id="intro-section" class="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 hidden">
                 <div class="bg-white rounded-[2.5rem] p-8 sm:p-12 shadow-sm border border-black/5 text-center space-y-6">
                     <div class="w-20 h-20 bg-primary-container text-on-primary-container rounded-3xl mx-auto flex items-center justify-center">
                         <span class="material-symbols-outlined text-4xl">rocket</span>
@@ -206,7 +219,11 @@
             </div>
 
             <!-- Detailed Results Section -->
-            <div id="details" class="hidden space-y-8 animate-in fade-in duration-700 pb-20">
+            <div id="details" class="hidden space-y-8 animate-in fade-in duration-500 pb-20">
+                <div id="final-score-banner" class="hidden w-full border rounded-3xl p-8 sm:p-12 text-center animate-in slide-in-from-top-4 duration-700">
+                    <h2 id="final-score-heading" class="text-3xl sm:text-4xl font-extrabold mb-3"></h2>
+                    <p id="final-score-subtext" class="font-medium text-lg sm:text-xl opacity-90"></p>
+                </div>
                 <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
                     <h3 class="text-2xl font-extrabold text-inverse-surface">Performance Scorecard</h3>
                     <button onclick="window.location.reload()" class="p-2.5 bg-surface-container-highest rounded-xl hover:bg-black/5 transition-colors flex items-center space-x-2 text-sm font-bold">
@@ -233,9 +250,9 @@
         </div>
     </main>
 
-    <script src="db.js"></script>
-    <script src="sm2.js"></script>
-    <script src="script.js"></script>
+    <script src="db.js?v=4"></script>
+    <script src="sm2.js?v=4"></script>
+    <script src="script.js?v=4"></script>
     <script>
         const toggleBtn = document.getElementById('sidebar-toggle');
         const closeBtn = document.getElementById('sidebar-close');
@@ -255,6 +272,33 @@
                 localStorage.setItem('sidebarExpanded', body.classList.contains('sidebar-expanded'));
             }
         }
+
+        // Swipe Gestures for Mobile Sidebar
+        let touchStartX = 0;
+        let touchEndX = 0;
+
+        function handleSwipe() {
+            const SWIPE_THRESHOLD = 50;
+            const EDGE_THRESHOLD = 30; // pixels from left edge to start swipe-open
+            const isExpanded = body.classList.contains('sidebar-expanded');
+
+            if (touchEndX < touchStartX - SWIPE_THRESHOLD && isExpanded) {
+                // Swipe left to close
+                body.classList.remove('sidebar-expanded');
+            } else if (touchEndX > touchStartX + SWIPE_THRESHOLD && !isExpanded && touchStartX <= EDGE_THRESHOLD) {
+                // Swipe right from the left edge to open
+                body.classList.add('sidebar-expanded');
+            }
+        }
+
+        document.addEventListener('touchstart', e => {
+            touchStartX = e.changedTouches[0].screenX;
+        }, { passive: true });
+
+        document.addEventListener('touchend', e => {
+            touchEndX = e.changedTouches[0].screenX;
+            handleSwipe();
+        }, { passive: true });
 
         toggleBtn?.addEventListener('click', toggleSidebar);
         closeBtn?.addEventListener('click', () => body.classList.remove('sidebar-expanded'));
