@@ -213,6 +213,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 resultDiv.className = "text-center font-bold text-lg text-error h-6";
             }
 
+            // Show explanation if available in data
+            const explanationContainer = document.getElementById('explanation-container');
+            const explanationText = document.getElementById('explanation-text');
+            const currentQAll = questions[questionHistory[currentQuestionIndex]];
+            
+            if (explanationContainer && explanationText && currentQAll.explanation) {
+                explanationText.innerText = currentQAll.explanation;
+                explanationContainer.classList.remove('hidden');
+            }
+
             correct_or_incorrect.push(result);
             totalScore += currentScore;
             currentSelectedAnswersAll.push([...currentSelectedAnswers]);
@@ -281,6 +291,12 @@ document.addEventListener('DOMContentLoaded', () => {
         selectedAnswers = [];
         currentSelectedAnswers = [];
         currentCorrectAnsArr = [];
+        
+        // Clear and hide explanation
+        const explanationContainer = document.getElementById('explanation-container');
+        const explanationText = document.getElementById('explanation-text');
+        if (explanationContainer) explanationContainer.classList.add('hidden');
+        if (explanationText) explanationText.innerText = '';
     }
 
     function showDetails() {

@@ -1,12 +1,16 @@
 <!doctype html>
 <html lang="en">
+
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Naive Quiz - Master Your AWS Skills</title>
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@700;800&family=Lexend:wght@300;400;500;600&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@700;800&family=Lexend:wght@300;400;500;600&display=swap"
+        rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1"
+        rel="stylesheet">
     <script>
         tailwind.config = {
             darkMode: "class",
@@ -33,30 +37,61 @@
         };
     </script>
     <style>
-        body { font-family: 'Lexend', sans-serif; }
-        h1, h2, h3 { font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 700; }
-        .sidebar-transition { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
-        
-        /* Universal Collapsible Sidebar Logic */
-        #main-container { margin-left: 0; transition: margin 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
-        @media (min-width: 1024px) {
-            body.sidebar-expanded #main-container { margin-left: 18rem; }
-            body.sidebar-expanded #sidebar { transform: translateX(0); }
+        body {
+            font-family: 'Lexend', sans-serif;
         }
-        body:not(.sidebar-expanded) #sidebar { transform: translateX(-100%); }
-        body.sidebar-expanded #sidebar-overlay { display: block; }
+
+        h1,
+        h2,
+        h3 {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-weight: 700;
+        }
+
+        .sidebar-transition {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* Universal Collapsible Sidebar Logic */
+        #main-container {
+            margin-left: 0;
+            transition: margin 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
         @media (min-width: 1024px) {
-            body.sidebar-expanded #sidebar-overlay { display: none; }
+            body.sidebar-expanded #main-container {
+                margin-left: 18rem;
+            }
+
+            body.sidebar-expanded #sidebar {
+                transform: translateX(0);
+            }
+        }
+
+        body:not(.sidebar-expanded) #sidebar {
+            transform: translateX(-100%);
+        }
+
+        body.sidebar-expanded #sidebar-overlay {
+            display: block;
+        }
+
+        @media (min-width: 1024px) {
+            body.sidebar-expanded #sidebar-overlay {
+                display: none;
+            }
         }
     </style>
 </head>
+
 <body class="bg-surface text-on-surface-variant selection:bg-primary/20">
-    
+
     <!-- Mobile Sidebar Overlay -->
     <div id="sidebar-overlay" class="fixed inset-0 bg-black/40 backdrop-blur-sm z-40 hidden transition-opacity"></div>
 
     <!-- Sidebar -->
-    <aside id="sidebar" class="fixed top-0 left-0 bottom-0 w-72 bg-white border-r border-surface-container-highest z-50 sidebar-transition">
+    <aside id="sidebar"
+        class="fixed top-0 left-0 bottom-0 w-72 bg-white border-r border-surface-container-highest z-50 sidebar-transition">
         <div class="flex flex-col h-full">
             <!-- Sidebar Header -->
             <div class="p-6 border-b border-surface-container-highest flex items-center justify-between">
@@ -66,7 +101,8 @@
                     </div>
                     <span class="text-xl font-headline font-extrabold text-inverse-surface">Naive Quiz</span>
                 </a>
-                <button id="sidebar-close" class="lg:hidden p-2 hover:bg-surface-container-highest rounded-full transition-colors">
+                <button id="sidebar-close"
+                    class="lg:hidden p-2 hover:bg-surface-container-highest rounded-full transition-colors">
                     <span class="material-symbols-outlined">close</span>
                 </button>
             </div>
@@ -80,14 +116,17 @@
     </aside>
 
     <main id="main-container" class="min-h-screen flex flex-col pt-16 lg:pt-0">
-        
+
         <!-- Top Bar -->
-        <header class="fixed top-0 left-0 right-0 h-16 bg-white/80 backdrop-blur-md border-b border-surface-container-highest z-30 flex items-center px-4 lg:px-8 justify-between">
+        <header
+            class="fixed top-0 left-0 right-0 h-16 bg-white/80 backdrop-blur-md border-b border-surface-container-highest z-30 flex items-center px-4 lg:px-8 justify-between">
             <div class="flex items-center space-x-4">
-                <button id="sidebar-toggle" class="p-2 hover:bg-surface-container-highest rounded-full text-on-surface-variant transition-colors group">
+                <button id="sidebar-toggle"
+                    class="p-2 hover:bg-surface-container-highest rounded-full text-on-surface-variant transition-colors group">
                     <span class="material-symbols-outlined group-hover:scale-110 transition-transform">menu</span>
                 </button>
-                <div class="flex items-center space-x-2 bg-primary-container/30 px-3 py-1 rounded-full border border-primary/20">
+                <div
+                    class="flex items-center space-x-2 bg-primary-container/30 px-3 py-1 rounded-full border border-primary/20">
                     <span class="w-2 h-2 rounded-full bg-primary animate-pulse w-max"></span>
                     <span class="text-xs uppercase tracking-widest font-bold text-primary">System Online</span>
                 </div>
@@ -95,96 +134,120 @@
         </header>
 
         <div class="flex-1 flex flex-col items-center justify-center p-6 sm:p-12">
-            <div class="max-w-4xl w-full flex flex-col items-center text-center space-y-8 animate-in fade-in duration-700">
-            
-            <!-- Hero logo -->
-            <div class="relative group">
-                <div class="absolute -inset-1 bg-gradient-to-r from-primary/20 to-secondary-container/20 rounded-full blur opacity-25 group-hover:opacity-50 transition duration-1000"></div>
-                <img src="img/awsLogo.png" alt="AWS Logo" class="relative w-48 h-auto drop-shadow-xl transform group-hover:scale-105 transition-transform duration-500">
-            </div>
+            <div
+                class="max-w-4xl w-full flex flex-col items-center text-center space-y-8 animate-in fade-in duration-700">
 
-            <!-- Header Text -->
-            <div class="space-y-4">
-                <h1 class="text-4xl sm:text-6xl text-inverse-surface tracking-tight leading-tight">
-                    Master Your <span class="text-primary italic">AWS Practitioner</span> Certification
-                </h1>
-                <p class="text-lg sm:text-xl font-light max-w-2xl mx-auto leading-relaxed">
-                    A intelligent quiz platform designed to help you ace the <span class="font-semibold px-2 py-0.5 bg-primary-container text-on-primary-container rounded-md">CLF-C02</span> exam through spaced repetition and the Feynman technique.
-                </p>
-
-                <!-- NEW: Primary Continue Button -->
-                <div class="pt-4">
-                    <a id="main-continue-btn" href="#" class="inline-flex items-center space-x-3 h-16 px-10 bg-primary text-on-primary rounded-2xl font-bold text-lg shadow-2xl shadow-primary/20 hover:bg-primary/90 hover:scale-[1.02] active:scale-[0.98] transition-all opacity-50 cursor-not-allowed pointer-events-none group" title="Please select a module below first">
-                         <span class="material-symbols-outlined group-hover:rotate-12 transition-transform">play_circle</span>
-                         <span>Continue with Current Module</span>
-                    </a>
-                </div>
-            </div>
-
-            <!-- Info Bar -->
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 w-full max-w-3xl">
-                <div class="p-6 bg-surface-container-highest rounded-3xl flex flex-col items-center space-y-2 border border-black/5">
-                    <span class="material-symbols-outlined text-primary text-3xl">quiz</span>
-                    <span class="text-2xl font-bold">383+</span>
-                    <span class="text-xs uppercase tracking-widest font-medium opacity-60">Curated Questions</span>
-                </div>
-                <div class="p-6 bg-surface-container-highest rounded-3xl flex flex-col items-center space-y-2 border border-black/5">
-                    <span class="material-symbols-outlined text-primary text-3xl">auto_fix_high</span>
-                    <span class="text-2xl font-bold">SM-2</span>
-                    <span class="text-xs uppercase tracking-widest font-medium opacity-60">Adaptive Learning</span>
-                </div>
-                <div class="p-6 bg-surface-container-highest rounded-3xl flex flex-col items-center space-y-2 border border-black/5">
-                    <span class="material-symbols-outlined text-primary text-3xl">school</span>
-                    <span class="text-2xl font-bold">Feynman</span>
-                    <span class="text-xs uppercase tracking-widest font-medium opacity-60">Concept Mastery</span>
-                </div>
-            </div>
-
-            <!-- CTA & Import Section -->
-            <div class="w-full max-w-2xl bg-white/40 border border-white p-8 rounded-[2.5rem] shadow-2xl backdrop-blur-md space-y-10">
-                
-                <!-- NEW: Quick Shortcuts section -->
-                <div id="quiz-shortcuts-container" class="space-y-6 hidden">
-                    <div class="text-left flex items-center justify-between">
-                        <h3 class="text-2xl text-inverse-surface">Continue Learning</h3>
-                        <span class="text-[10px] uppercase font-bold tracking-widest opacity-40">Your Active Modules</span>
+                <!-- Hero logo -->
+                <div class="relative group">
+                    <div
+                        class="absolute -inset-1 bg-gradient-to-r from-primary/20 to-secondary-container/20 rounded-full blur opacity-25 group-hover:opacity-50 transition duration-1000">
                     </div>
-                    <div id="quiz-shortcuts" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <!-- Populated by db.js -->
+                    <img src="img/logo.png" alt="AWS Logo"
+                        class="relative w-48 h-auto drop-shadow-xl transform group-hover:scale-105 transition-transform duration-500">
+                </div>
+
+                <!-- Header Text -->
+                <div class="space-y-4">
+                    <h1 class="text-4xl sm:text-6xl text-inverse-surface tracking-tight leading-tight">
+                        Master Your <span class="text-primary italic">AWS Practitioner</span> Certification
+                    </h1>
+                    <p class="text-lg sm:text-xl font-light max-w-2xl mx-auto leading-relaxed">
+                        A intelligent quiz platform designed to help you ace the <span
+                            class="font-semibold px-2 py-0.5 bg-primary-container text-on-primary-container rounded-md">CLF-C02</span>
+                        exam through spaced repetition and the Feynman technique.
+                    </p>
+
+                    <!-- NEW: Primary Continue Button -->
+                    <div class="pt-4">
+                        <a id="main-continue-btn" href="#"
+                            class="inline-flex items-center space-x-3 h-16 px-10 bg-primary text-on-primary rounded-2xl font-bold text-lg shadow-2xl shadow-primary/20 hover:bg-primary/90 hover:scale-[1.02] active:scale-[0.98] transition-all opacity-50 cursor-not-allowed pointer-events-none group"
+                            title="Please select a module below first">
+                            <span
+                                class="material-symbols-outlined group-hover:rotate-12 transition-transform">play_circle</span>
+                            <span>Continue with Current Module</span>
+                        </a>
                     </div>
                 </div>
 
-                <!-- NEW: Quiz Architect Section -->
-                <div class="space-y-6 border-t border-black/5 pt-8">
-                    <div class="text-left flex items-center justify-between">
-                        <div class="space-y-1">
-                            <h3 class="text-2xl text-inverse-surface">Quiz Architect</h3>
-                            <p class="text-sm opacity-70">Generate custom modules using NotebookLM.</p>
+                <!-- Info Bar -->
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 w-full max-w-3xl">
+                    <div
+                        class="p-6 bg-surface-container-highest rounded-3xl flex flex-col items-center space-y-2 border border-black/5">
+                        <span class="material-symbols-outlined text-primary text-3xl">quiz</span>
+                        <span class="text-2xl font-bold">383+</span>
+                        <span class="text-xs uppercase tracking-widest font-medium opacity-60">Curated Questions</span>
+                    </div>
+                    <div
+                        class="p-6 bg-surface-container-highest rounded-3xl flex flex-col items-center space-y-2 border border-black/5">
+                        <span class="material-symbols-outlined text-primary text-3xl">auto_fix_high</span>
+                        <span class="text-2xl font-bold">SM-2</span>
+                        <span class="text-xs uppercase tracking-widest font-medium opacity-60">Adaptive Learning</span>
+                    </div>
+                    <div
+                        class="p-6 bg-surface-container-highest rounded-3xl flex flex-col items-center space-y-2 border border-black/5">
+                        <span class="material-symbols-outlined text-primary text-3xl">school</span>
+                        <span class="text-2xl font-bold">Feynman</span>
+                        <span class="text-xs uppercase tracking-widest font-medium opacity-60">Concept Mastery</span>
+                    </div>
+                </div>
+
+                <!-- CTA & Import Section -->
+                <div
+                    class="w-full max-w-2xl bg-white/40 border border-white p-8 rounded-[2.5rem] shadow-2xl backdrop-blur-md space-y-10">
+
+                    <!-- NEW: Quick Shortcuts section -->
+                    <div id="quiz-shortcuts-container" class="space-y-6 hidden">
+                        <div class="text-left flex items-center justify-between">
+                            <h3 class="text-2xl text-inverse-surface">Continue Learning</h3>
+                            <span class="text-[10px] uppercase font-bold tracking-widest opacity-40">Your Active
+                                Modules</span>
                         </div>
-                        <div class="p-3 rounded-2xl bg-secondary-container text-on-secondary-fixed">
-                            <span class="material-symbols-outlined text-[24px]">psychology_alt</span>
+                        <div id="quiz-shortcuts" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <!-- Populated by db.js -->
                         </div>
                     </div>
 
-                    <div class="relative group">
-                        <div class="absolute -inset-2 bg-gradient-to-r from-primary/5 to-secondary-container/5 rounded-[2rem] blur opacity-0 group-hover:opacity-100 transition duration-500"></div>
-                        <div class="relative bg-white/60 border border-white rounded-3xl p-5 space-y-4">
-                            <div class="flex items-center justify-between text-[10px] font-bold uppercase tracking-widest opacity-40">
-                                <span>Master Prompt Template</span>
-                                <span class="text-primary italic">NotebookLM Specialized</span>
+                    <!-- NEW: Quiz Architect Section -->
+                    <div class="space-y-6 border-t border-black/5 pt-8">
+                        <div class="text-left flex items-center justify-between">
+                            <div class="space-y-1">
+                                <h3 class="text-2xl text-inverse-surface">Quiz Architect</h3>
+                                <p class="text-sm opacity-70">Generate custom modules using NotebookLM.</p>
                             </div>
-                            
-                            <div id="prompt-template" class="text-xs font-mono text-left leading-relaxed opacity-80 h-32 overflow-y-auto scrollbar-hide pr-2 select-all">
-Act as an Expert Educator and JSON Architect using the current notebook sources (Books/Documents) as your primary knowledge base.
+                            <div class="p-3 rounded-2xl bg-secondary-container text-on-secondary-fixed">
+                                <span class="material-symbols-outlined text-[24px]">psychology_alt</span>
+                            </div>
+                        </div>
 
-Generate a comprehensive JSON quiz based ONLY on the provided book sources.
+                        <div class="relative group">
+                            <div
+                                class="absolute -inset-2 bg-gradient-to-r from-primary/5 to-secondary-container/5 rounded-[2rem] blur opacity-0 group-hover:opacity-100 transition duration-500">
+                            </div>
+                            <div class="relative bg-white/60 border border-white rounded-3xl p-5 space-y-4">
+                                <div
+                                    class="flex items-center justify-between text-[10px] font-bold uppercase tracking-widest opacity-40">
+                                    <span>Master Prompt Template</span>
+                                    <span class="text-primary italic">NotebookLM Specialized</span>
+                                </div>
+
+                                <div id="prompt-template"
+                                    class="text-xs font-mono text-left leading-relaxed opacity-80 h-32 overflow-y-auto scrollbar-hide pr-2 select-all">
+                                    Act as an Expert Educator and JSON Architect. Use the provided book sources as your primary knowledge base.
+
+Goal: Generate a comprehensive JSON quiz based ONLY on the attached sources.
 
 Parameters:
 - Topic/Chapters: {{TOPIC}}
-- Difficulty: {{DIFFICULTY}}
+- Difficulty: {{DIFFICULTY}} (1=Easy, 10=Expert)
 - Style: {{STYLE}}
 
-Strictly follow this JSON schema:
+Evaluation Protocol (MANDATORY):
+1. **Source Mapping:** For every question, identify the exact page/paragraph in the source.
+2. **Answer Verification:** Double-check that the 'correct_answer_id' points to an option that is EXPLICITLY supported by the text.
+3. **Plausible Distractors:** Generate wrong options that look correct but contain subtle errors present in misconceptions.
+4. **Mandatory Field Check:** Every question MUST have a 'correct_answer_id' (or an array for multiple choice) and an 'explanation'.
+
+JSON Schema:
 {
   "quizzes": [{
     "quiz_id": 1,
@@ -195,64 +258,83 @@ Strictly follow this JSON schema:
       "options": [
         { "option_id": 1, "option_text": "..." }
       ],
-      "correct_answer_id": 1 
+      "correct_answer_id": 1, 
+      "explanation": "Brief reasoning for the correct answer, citing the source if possible."
     }]
   }]
 }
 
 Instructions:
-1. **Chapter Analysis:** Scan sources for chapter boundaries. Distribute questions proportionally.
-2. **Concept Density:** Focus on Learning Objectives/Summaries.
-3. **Plausible Distractors:** Use common misconceptions from the text.
-4. **Multiple Answers:** Support arrays for 'correct_answer_id'.
-5. **Output:** Provide ONLY raw JSON. No conversational text.
-                            </div>
+- Provide ONLY raw JSON. No markdown backticks, no header/footer.
+- If multiple answers are correct, 'correct_answer_id' MUST be an array: [1, 2].
+- Ensure high concept density and strictly technical language from the source.
+                                </div>
 
-                            <button id="copyPromptBtn" class="flex items-center justify-center space-x-2 w-full py-3 bg-inverse-surface text-surface rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-inverse-surface/90 transition-all group overflow-hidden relative">
-                                <span id="copyText" class="relative z-10 transition-transform duration-300">Copy Template for NotebookLM</span>
-                                <span id="copyIcon" class="material-symbols-outlined text-[18px] relative z-10">content_copy</span>
-                                <div id="copySuccessBg" class="absolute inset-0 bg-primary translate-y-full transition-transform duration-300"></div>
-                            </button>
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                    <button id="copyPromptBtn"
+                                        class="flex items-center justify-center space-x-2 w-full py-3 bg-inverse-surface text-surface rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-inverse-surface/90 transition-all group overflow-hidden relative">
+                                        <span id="copyText" class="relative z-10 transition-transform duration-300">Copy Template</span>
+                                        <span id="copyIcon"
+                                            class="material-symbols-outlined text-[18px] relative z-10">content_copy</span>
+                                        <div id="copySuccessBg"
+                                            class="absolute inset-0 bg-primary translate-y-full transition-transform duration-300">
+                                        </div>
+                                    </button>
+
+                                    <button id="copyFineTuneBtn"
+                                        class="flex items-center justify-center space-x-2 w-full py-3 bg-primary/10 text-primary rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-primary/20 transition-all group overflow-hidden relative border border-primary/20">
+                                        <span id="copyFineTuneText" class="relative z-10 transition-transform duration-300">Copy Fine-Tuner</span>
+                                        <span id="copyFineTuneIcon"
+                                            class="material-symbols-outlined text-[18px] relative z-10">auto_fix_high</span>
+                                        <div id="copyFineTuneSuccessBg"
+                                            class="absolute inset-0 bg-primary translate-y-full transition-transform duration-300">
+                                        </div>
+                                    </button>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                </div>
 
-                <div class="space-y-6">
-                    <div class="text-left space-y-2 border-t border-black/5 pt-8">
-                        <h3 class="text-2xl text-inverse-surface">Import Data</h3>
-                        <p class="text-sm opacity-70">New study material? Upload your JSON file here.</p>
+                    <div class="space-y-6">
+                        <div class="text-left space-y-2 border-t border-black/5 pt-8">
+                            <h3 class="text-2xl text-inverse-surface">Import Data</h3>
+                            <p class="text-sm opacity-70">New study material? Upload your JSON file here.</p>
+                        </div>
+
+                        <div class="space-y-4">
+                            <div class="relative">
+                                <input type="file" id="customDataInput" accept=".json" class="hidden">
+                                <label for="customDataInput"
+                                    class="w-full h-16 flex items-center justify-between px-6 bg-white rounded-2xl border-2 border-dashed border-primary/20 hover:border-primary/50 cursor-pointer transition-all group">
+                                    <span
+                                        class="text-primary/60 font-medium group-hover:text-primary transition-colors">Select
+                                        study JSON file...</span>
+                                    <span class="material-symbols-outlined text-primary/60">upload_file</span>
+                                </label>
+                            </div>
+
+                            <button id="loadCustomBtn"
+                                class="w-full h-14 bg-primary text-on-primary rounded-2xl font-semibold shadow-lg shadow-primary/20 hover:bg-primary/90 hover:scale-[1.01] active:scale-[0.98] transition-all flex items-center justify-center space-x-2">
+                                <span>Load Custom Data</span>
+                                <span class="material-symbols-outlined">rocket_launch</span>
+                            </button>
+
+                            <p id="uploadStatus" class="text-center text-sm font-medium h-4"></p>
+                        </div>
                     </div>
 
-                <div class="space-y-4">
-                    <div class="relative">
-                        <input type="file" id="customDataInput" accept=".json" class="hidden">
-                        <label for="customDataInput" class="w-full h-16 flex items-center justify-between px-6 bg-white rounded-2xl border-2 border-dashed border-primary/20 hover:border-primary/50 cursor-pointer transition-all group">
-                            <span class="text-primary/60 font-medium group-hover:text-primary transition-colors">Select study JSON file...</span>
-                            <span class="material-symbols-outlined text-primary/60">upload_file</span>
-                        </label>
+                    <!-- Footer links -->
+                    <div class="flex items-center space-x-6 text-sm font-medium opacity-60 pt-4">
+                        <a href="#" class="hover:text-primary flex items-center space-x-1 uppercase tracking-wider">
+                            <span class="material-symbols-outlined text-sm">coffee</span>
+                            <span>Buy me a coffee</span>
+                        </a>
+                        <span class="w-1 h-1 bg-on-surface-variant rounded-full opacity-20"></span>
+                        <span class="uppercase tracking-wider">v1.2.0 Modernized</span>
                     </div>
-                    
-                    <button id="loadCustomBtn" class="w-full h-14 bg-primary text-on-primary rounded-2xl font-semibold shadow-lg shadow-primary/20 hover:bg-primary/90 hover:scale-[1.01] active:scale-[0.98] transition-all flex items-center justify-center space-x-2">
-                        <span>Load Custom Data</span>
-                        <span class="material-symbols-outlined">rocket_launch</span>
-                    </button>
-                    
-                    <p id="uploadStatus" class="text-center text-sm font-medium h-4"></p>
+
                 </div>
             </div>
-
-            <!-- Footer links -->
-            <div class="flex items-center space-x-6 text-sm font-medium opacity-60 pt-4">
-                <a href="#" class="hover:text-primary flex items-center space-x-1 uppercase tracking-wider">
-                    <span class="material-symbols-outlined text-sm">coffee</span>
-                    <span>Buy me a coffee</span>
-                </a>
-                <span class="w-1 h-1 bg-on-surface-variant rounded-full opacity-20"></span>
-                <span class="uppercase tracking-wider">v1.2.0 Modernized</span>
-            </div>
-
-            </div>
-        </div>
     </main>
 
     <script src="sm2.js"></script>
@@ -360,6 +442,53 @@ Instructions:
                 });
             });
         }
+
+        const copyFineTuneBtn = document.getElementById('copyFineTuneBtn');
+        const copyFineTuneText = document.getElementById('copyFineTuneText');
+        const copyFineTuneIcon = document.getElementById('copyFineTuneIcon');
+        const copyFineTuneSuccessBg = document.getElementById('copyFineTuneSuccessBg');
+        
+        const FINE_TUNE_PROMPT = `Act as an Expert Content Auditor and JSON Engineer. 
+
+Goal: Process the provided quiz JSON and verify it against the attached source material (notebook sources).
+
+Correction Protocol:
+1. Schema & Typos: Rename 'quesiton_id' to 'question_id' if found.
+2. Grounded Truth Check: Verify that the 'correct_answer_id' is factually accurate according to the sources. If incorrect, update it.
+3. Logical Consistency (Strict Rules):
+   - If 'question_text' contains "(Select TWO)", 'correct_answer_id' MUST be an array of exactly 2 unique IDs. Find the two most accurate options if they aren't already marked.
+   - If only 1 correct answer is found in sources for a "Select TWO" question, generate a new correct option that is factually accurate.
+4. Explanations (MANDATORY): Ensure every question has an 'explanation' field. 
+   - The explanation must provide the rationale for the correct answer(s).
+   - Use technical language from the source.
+5. Consistency: Ensure all 'option_id' values are integers and sequential within each question.
+
+Instructions:
+- I will provide the JSON below.
+- Return ONLY the corrected raw JSON block. No introductory text, no markdown code blocks.
+- Preserve the overall 'quizzes' structure.`;
+
+        if (copyFineTuneBtn) {
+            copyFineTuneBtn.addEventListener('click', () => {
+                navigator.clipboard.writeText(FINE_TUNE_PROMPT).then(() => {
+                    // Success State
+                    copyFineTuneText.innerText = 'Copied!';
+                    copyFineTuneIcon.innerText = 'check_circle';
+                    copyFineTuneSuccessBg.classList.replace('translate-y-full', 'translate-y-0');
+                    copyFineTuneBtn.classList.replace('text-primary', 'text-white');
+                    copyFineTuneBtn.classList.add('scale-[0.98]');
+
+                    setTimeout(() => {
+                        copyFineTuneText.innerText = 'Copy Fine-Tuner';
+                        copyFineTuneIcon.innerText = 'auto_fix_high';
+                        copyFineTuneSuccessBg.classList.replace('translate-y-0', 'translate-y-full');
+                        copyFineTuneBtn.classList.replace('text-white', 'text-primary');
+                        copyFineTuneBtn.classList.remove('scale-[0.98]');
+                    }, 2000);
+                });
+            });
+        }
     </script>
 </body>
+
 </html>
