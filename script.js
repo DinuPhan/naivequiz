@@ -133,7 +133,14 @@ document.addEventListener('DOMContentLoaded', () => {
         resetState();
 
         const feynmanSection = document.getElementById('feynman-section');
-        feynmanSection.classList.add('hidden');
+        const saveFeynmanBtn = document.getElementById('save-feynman-btn');
+        if (feynmanSection) feynmanSection.classList.add('hidden');
+        if (saveFeynmanBtn) {
+            const btnText = saveFeynmanBtn.querySelector('span:not(.material-symbols-outlined)');
+            const btnIcon = saveFeynmanBtn.querySelector('.material-symbols-outlined');
+            if (btnText) btnText.innerText = 'Continue';
+            if (btnIcon) btnIcon.innerText = 'arrow_forward';
+        }
         document.getElementById('feynman-textarea').value = '';
 
         currentScore = 0;
@@ -297,11 +304,30 @@ Please explain clearly and concisely why this option is correct or incorrect bas
             if (isWrong) {
                 nextBtn.classList.add('hidden');
                 const feynmanSection = document.getElementById('feynman-section');
+                const feynmanTextarea = document.getElementById('feynman-textarea');
+                const saveFeynmanBtn = document.getElementById('save-feynman-btn');
+                const btnText = saveFeynmanBtn.querySelector('span:not(.material-symbols-outlined)');
+                const btnIcon = saveFeynmanBtn.querySelector('.material-symbols-outlined');
+
                 feynmanSection.classList.remove('hidden');
                 document.getElementById('feynman-hint').innerText = "Focus on the core concept. Try to simplify the logic behind the correct architecture.";
 
-                document.getElementById('save-feynman-btn').onclick = () => {
-                    const explanation = document.getElementById('feynman-textarea').value;
+                // Initial state
+                btnText.innerText = "Continue";
+                btnIcon.innerText = "arrow_forward";
+
+                feynmanTextarea.oninput = () => {
+                    if (feynmanTextarea.value.trim() === "") {
+                        btnText.innerText = "Continue";
+                        btnIcon.innerText = "arrow_forward";
+                    } else {
+                        btnText.innerText = "Submit Response";
+                        btnIcon.innerText = "done_all";
+                    }
+                };
+
+                saveFeynmanBtn.onclick = () => {
+                    const explanation = feynmanTextarea.value;
                     if (currentQuizId !== 'fun') {
                         getProgress(qId).then(prevData => {
                             const newData = calculateSM2(2, prevData);
@@ -310,7 +336,7 @@ Please explain clearly and concisely why this option is correct or incorrect bas
                     }
 
                     feynmanSection.classList.add('hidden');
-                    nextBtn.classList.remove('hidden');
+                    loadNextQuestion();
                 };
             } else {
                 if (currentQuizId !== 'fun') {
@@ -319,7 +345,7 @@ Please explain clearly and concisely why this option is correct or incorrect bas
                         if (typeof saveProgress === 'function') saveProgress(qId, newData);
                     });
                 }
-                nextBtn.classList.remove('hidden');
+                loadNextQuestion();
             }
         }
     }

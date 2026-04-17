@@ -74,7 +74,8 @@
         }
 
         @media (min-width: 1024px) {
-            body.sidebar-expanded #main-container {
+            body.sidebar-expanded #main-container,
+            body.sidebar-expanded header {
                 margin-left: 18rem;
             }
 
@@ -95,6 +96,47 @@
             body.sidebar-expanded #sidebar-overlay {
                 display: none;
             }
+        }
+
+        @keyframes pulse-ring {
+            0% {
+                transform: scale(0.95);
+                opacity: 0.5;
+            }
+
+            50% {
+                transform: scale(1.05);
+                opacity: 0.8;
+            }
+
+            100% {
+                transform: scale(0.95);
+                opacity: 0.5;
+            }
+        }
+
+        .animate-pulse-ring {
+            animation: pulse-ring 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+
+        @keyframes text-slide-in {
+            0% {
+                transform: translateY(10px);
+                opacity: 0;
+            }
+
+            100% {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .animate-text-reveal {
+            animation: text-slide-in 0.4s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+        }
+
+        .selected-card-glow {
+            box-shadow: 0 0 20px 5px rgba(67, 103, 0, 0.15);
         }
     </style>
 </head>
@@ -117,7 +159,7 @@
                     <span class="text-xl font-headline font-extrabold text-inverse-surface">Naive Quiz</span>
                 </a>
                 <button id="sidebar-close"
-                    class="lg:hidden p-2 hover:bg-surface-container-highest rounded-full transition-colors">
+                    class="p-2 hover:bg-surface-container-highest rounded-full transition-colors">
                     <span class="material-symbols-outlined">close</span>
                 </button>
             </div>
@@ -164,23 +206,14 @@
                 <!-- Header Text -->
                 <div class="space-y-4">
                     <h1 class="text-4xl sm:text-6xl text-inverse-surface tracking-tight leading-tight">
-                        Learn Anything <span class="text-primary italic">Interactively</span>
+                        Prepare for anything by quizzes <span class="text-primary italic">nAIvely</span>
                     </h1>
                     <p class="text-lg sm:text-xl font-light max-w-2xl mx-auto leading-relaxed">
-                        A naive offline quiz app built to help you master new topics using spaced repetition and the
+                        A naive quiz app built to help you ace your certification exams with spaced repetition and the
                         Feynman technique. Load your own JSON quizzes.
                     </p>
 
-                    <!-- NEW: Primary Continue Button -->
-                    <div class="pt-4">
-                        <a id="main-continue-btn" href="#"
-                            class="inline-flex items-center space-x-3 h-16 px-10 bg-primary text-on-primary rounded-2xl font-bold text-lg shadow-2xl shadow-primary/20 hover:bg-primary/90 hover:scale-[1.02] active:scale-[0.98] transition-all opacity-50 cursor-not-allowed pointer-events-none group"
-                            title="Please select a module below first">
-                            <span
-                                class="material-symbols-outlined group-hover:rotate-12 transition-transform">play_circle</span>
-                            <span>Continue with Current Module</span>
-                        </a>
-                    </div>
+
                 </div>
 
                 <!-- Info Bar -->

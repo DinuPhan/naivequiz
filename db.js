@@ -202,22 +202,7 @@ function renderNavbar() {
     });
 }
 
-function updateContinueButton(selectedId) {
-    const btn = document.getElementById('main-continue-btn');
-    if (!btn) return;
 
-    if (selectedId) {
-        btn.href = `quiz.html?id=${selectedId}#id=${selectedId}`;
-        btn.classList.remove('opacity-50', 'cursor-not-allowed', 'pointer-events-none');
-        btn.classList.add('shadow-primary/40');
-        btn.title = "Jump back into your module";
-    } else {
-        btn.href = "#";
-        btn.classList.add('opacity-50', 'cursor-not-allowed', 'pointer-events-none');
-        btn.classList.remove('shadow-primary/40');
-        btn.title = "Please select a module below first";
-    }
-}
 
 function renderQuizShortcuts() {
     const shortcutsContainer = document.getElementById('quiz-shortcuts');
@@ -225,7 +210,6 @@ function renderQuizShortcuts() {
     if (!shortcutsContainer) return Promise.resolve();
 
     const selectedQuizId = localStorage.getItem('selectedQuizId');
-    updateContinueButton(selectedQuizId);
 
     return getQuizzes().then(quizzes => {
         if (quizzes.length === 0) {
@@ -261,29 +245,36 @@ function renderQuizShortcuts() {
             
             card.className = `group block p-5 rounded-2xl border-2 transition-all animate-in zoom-in-95 duration-500 scale-100 active:scale-95 cursor-pointer ${
                 isSelected 
-                ? 'bg-primary/5 border-primary shadow-xl shadow-primary/5' 
+                ? 'bg-primary/5 border-primary selected-card-glow' 
                 : 'bg-white border-black/5 hover:border-primary/20 hover:shadow-xl hover:shadow-primary/5'
             }`;
             
             card.innerHTML = `
                 <div class="flex items-start justify-between mb-4">
-                    <div class="p-2.5 rounded-xl transition-colors ${
-                        isSelected ? 'bg-primary text-on-primary' : 'bg-primary/5 text-primary group-hover:bg-primary group-hover:text-on-primary'
+                    <div class="p-2.5 rounded-xl transition-all duration-300 ${
+                        isSelected ? 'bg-primary text-on-primary animate-pulse-ring' : 'bg-primary/5 text-primary group-hover:bg-primary group-hover:text-on-primary'
                     }">
-                        <span class="material-symbols-outlined text-[20px]">${isSelected ? 'check_circle' : 'play_arrow'}</span>
+                        <span class="material-symbols-outlined text-[20px]">${isSelected ? 'rocket_launch' : 'play_arrow'}</span>
                     </div>
                     <span class="text-[10px] font-bold uppercase tracking-widest opacity-30 group-hover:opacity-60 transition-opacity">Quiz ID: ${quiz.id}</span>
                 </div>
                 <h4 class="font-bold text-inverse-surface leading-tight transition-colors line-clamp-2 ${isSelected ? 'text-primary' : 'group-hover:text-primary'}">${quiz.title}</h4>
                 <div class="mt-4 flex items-center text-[10px] font-bold uppercase tracking-widest text-primary ${isSelected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100 transition-all translate-y-2 group-hover:translate-y-0'}">
-                    <span>${isSelected ? 'Currently Selected' : 'Select Module'}</span>
-                    <span class="material-symbols-outlined text-[14px] ml-1">chevron_right</span>
+                    <span class="${isSelected ? 'animate-text-reveal' : ''}">${isSelected ? 'Click again to Start' : 'Select Module'}</span>
+                    <span class="material-symbols-outlined text-[14px] ml-1 ${isSelected ? 'animate-bounce' : ''}">
+                        ${isSelected ? 'arrow_forward' : 'chevron_right'}
+                    </span>
                 </div>
             `;
 
             card.onclick = () => {
-                localStorage.setItem('selectedQuizId', quiz.id);
-                renderQuizShortcuts(); // Re-render to update highlights and continue button
+                const isAlreadySelected = localStorage.getItem('selectedQuizId') === quiz.id.toString();
+                if (isAlreadySelected) {
+                    window.location.href = `quiz.html?id=${quiz.id}#id=${quiz.id}`;
+                } else {
+                    localStorage.setItem('selectedQuizId', quiz.id);
+                    renderQuizShortcuts(); // Re-render to update highlights
+                }
             };
 
             shortcutsContainer.appendChild(card);
