@@ -170,6 +170,35 @@ function getQuizzes() {
     });
 }
 
+function getRecentQuizIds() {
+    return new Promise((resolve, reject) => {
+        const transaction = db.transaction(['progress'], 'readonly');
+        const store = transaction.objectStore('progress');
+        const request = store.getAll();
+
+        request.onsuccess = () => {
+            const progress = request.result;
+            const quizStatus = new Map();
+            
+            progress.forEach(p => {
+                const quizId = p.question_id.split('_')[0];
+                const lastReviewed = new Date(p.lastReviewed).getTime();
+                
+                if (!quizStatus.has(quizId) || lastReviewed > quizStatus.get(quizId)) {
+                    quizStatus.set(quizId, lastReviewed);
+                }
+            });
+
+            const sortedQuizIds = Array.from(quizStatus.entries())
+                .sort((a, b) => b[1] - a[1])
+                .map(entry => entry[0]);
+                
+            resolve(sortedQuizIds);
+        };
+        request.onerror = (e) => reject(e.target.error);
+    });
+}
+
 function renderNavbar() {
     const navList = document.getElementById('dynamic-nav-list');
     if (!navList) return Promise.resolve();
@@ -211,7 +240,13 @@ function renderQuizShortcuts() {
 
     const selectedQuizId = localStorage.getItem('selectedQuizId');
 
-    return getQuizzes().then(quizzes => {
+    return Promise.all([getQuizzes(), getRecentQuizIds()]).then(([allQuizzes, recentQuizIds]) => {
+        // Map recent IDs to quiz objects and limit to 5
+        const quizzes = recentQuizIds
+            .map(id => allQuizzes.find(q => q.id.toString() === id.toString()))
+            .filter(q => q !== undefined)
+            .slice(0, 5);
+
         if (quizzes.length === 0) {
             wrapper.classList.add('hidden');
             return;
