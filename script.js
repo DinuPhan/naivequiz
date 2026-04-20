@@ -42,6 +42,36 @@ document.addEventListener('DOMContentLoaded', () => {
             const targetQuizId = parseInt(urlParams.get('id') || hashParams.get('id')) || 1;
             const mode = urlParams.get('mode') || hashParams.get('mode');
 
+            const finalizeLoad = (quizTitle) => {
+                if (questions.length === 0) {
+                    const titleElem = document.getElementById('quiz-title');
+                    if (titleElem) titleElem.innerText = "No topics for review!";
+                    if (introSection) introSection.classList.remove('hidden');
+                    return reject("No questions found");
+                }
+
+                const totalQuestions = questions.length;
+                const passingMarks = Math.ceil(totalQuestions * 0.7);
+
+                if (document.getElementById('page-title')) document.getElementById('page-title').innerText = quizTitle;
+                if (document.getElementById('quiz-title')) document.getElementById('quiz-title').innerText = quizTitle;
+                if (document.getElementById('quiz-question-count')) document.getElementById('quiz-question-count').innerText = totalQuestions;
+                if (document.getElementById('quiz-total-marks')) document.getElementById('quiz-total-marks').innerText = totalQuestions;
+                if (document.getElementById('quiz-passing-marks')) document.getElementById('quiz-passing-marks').innerText = passingMarks;
+
+                if (introSection) introSection.classList.remove('hidden');
+                resolve();
+            };
+
+            if (mode === 'smart') {
+                getReviewQuestions().then(reviewQuestions => {
+                    questions = reviewQuestions;
+                    currentQuizId = 'smart';
+                    finalizeLoad("Smart Review (Weak Topics)");
+                }).catch(reject);
+                return;
+            }
+
             const transaction = db.transaction(['questions'], 'readonly');
             const store = transaction.objectStore('questions');
             const request = store.getAll();
@@ -51,12 +81,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 let quizTitle = "";
 
                 if (mode === 'fun') {
-                    // Properly shuffle using Fisher-Yates and pick 10
-                    const shuffled = [...allData];
-                    for (let i = shuffled.length - 1; i > 0; i--) {
-                        const j = Math.floor(Math.random() * (i + 1));
-                        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-                    }
+                    const shuffled = [...allData].sort(() => 0.5 - Math.random());
                     questions = shuffled.slice(0, 10);
                     currentQuizId = 'fun';
                     quizTitle = "Fun Mode (Random 10)";
@@ -66,26 +91,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     quizTitle = questions.length > 0 ? (questions[0].quiz_title || "Quiz " + targetQuizId) : "Quiz " + targetQuizId;
                 }
 
-                if (questions.length === 0) {
-                    const titleElem = document.getElementById('quiz-title');
-                    if (titleElem) titleElem.innerText = "Quiz not found!";
-                    if (introSection) introSection.classList.remove('hidden');
-                    return reject("No questions found for this ID");
-                }
-
-                const totalQuestions = questions.length;
-                const passingMarks = Math.ceil(totalQuestions * 0.7);
-
-                // Update UI
-                if (document.getElementById('page-title')) document.getElementById('page-title').innerText = quizTitle;
-                if (document.getElementById('quiz-title')) document.getElementById('quiz-title').innerText = quizTitle;
-                if (document.getElementById('quiz-question-count')) document.getElementById('quiz-question-count').innerText = totalQuestions;
-                if (document.getElementById('quiz-total-marks')) document.getElementById('quiz-total-marks').innerText = totalQuestions;
-                if (document.getElementById('quiz-passing-marks')) document.getElementById('quiz-passing-marks').innerText = passingMarks;
-
-                if (introSection) introSection.classList.remove('hidden');
-
-                resolve();
+                finalizeLoad(quizTitle);
             };
             request.onerror = (e) => reject(e.target.error);
         });
@@ -147,6 +153,29 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('question_no').innerText = `Question ${currentQuestionIndex + 1}`;
         document.getElementById('question').innerText = question.question_text;
         questionTextArr.push(question.question_text);
+
+        // Handle Personal Notes (Active Recall)
+        const notesContainer = document.getElementById('notes-container');
+        const notesText = document.getElementById('notes-text');
+        const notesContent = document.getElementById('notes-content');
+        const toggleBtn = document.getElementById('toggle-notes-btn');
+        const toggleIcon = document.getElementById('notes-toggle-icon');
+
+        if (notesContainer && question.feynman_explanation) {
+            notesContainer.classList.remove('hidden');
+            notesText.innerText = question.feynman_explanation;
+            
+            toggleBtn.onclick = () => {
+                const isHidden = notesContent.classList.contains('hidden');
+                if (isHidden) {
+                    notesContent.classList.remove('hidden');
+                    toggleIcon.style.transform = 'rotate(180deg)';
+                } else {
+                    notesContent.classList.add('hidden');
+                    toggleIcon.style.transform = 'rotate(0deg)';
+                }
+            };
+        }
 
         const labels = ['A', 'B', 'C', 'D', 'E', 'F'];
 
@@ -331,6 +360,12 @@ Please explain clearly and concisely why this option is correct or incorrect bas
                     if (currentQuizId !== 'fun') {
                         getProgress(qId).then(prevData => {
                             const newData = calculateSM2(2, prevData);
+                            if (explanation.trim()) {
+                                newData.feynman_explanation = explanation;
+                            } else if (prevData && prevData.feynman_explanation) {
+                                // Keep old explanation if not updated
+                                newData.feynman_explanation = prevData.feynman_explanation;
+                            }
                             if (typeof saveProgress === 'function') saveProgress(qId, newData);
                         });
                     }
@@ -342,6 +377,10 @@ Please explain clearly and concisely why this option is correct or incorrect bas
                 if (currentQuizId !== 'fun') {
                     getProgress(qId).then(prevData => {
                         const newData = calculateSM2(4, prevData);
+                        // Preserve existing feynman notes even on success
+                        if (prevData && prevData.feynman_explanation) {
+                            newData.feynman_explanation = prevData.feynman_explanation;
+                        }
                         if (typeof saveProgress === 'function') saveProgress(qId, newData);
                     });
                 }
@@ -379,6 +418,14 @@ Please explain clearly and concisely why this option is correct or incorrect bas
         const explanationText = document.getElementById('explanation-text');
         if (explanationContainer) explanationContainer.classList.add('hidden');
         if (explanationText) explanationText.innerText = '';
+
+        // Clear and hide notes
+        const notesContainer = document.getElementById('notes-container');
+        const notesContent = document.getElementById('notes-content');
+        const toggleIcon = document.getElementById('notes-toggle-icon');
+        if (notesContainer) notesContainer.classList.add('hidden');
+        if (notesContent) notesContent.classList.add('hidden');
+        if (toggleIcon) toggleIcon.style.transform = 'rotate(0deg)';
     }
 
     function showDetails(hasPassed = null, finalScore = null, maxScore = null) {

@@ -240,14 +240,14 @@ function renderQuizShortcuts() {
 
     const selectedQuizId = localStorage.getItem('selectedQuizId');
 
-    return Promise.all([getQuizzes(), getRecentQuizIds()]).then(([allQuizzes, recentQuizIds]) => {
+    return Promise.all([getQuizzes(), getRecentQuizIds(), getReviewStats()]).then(([allQuizzes, recentQuizIds, weakCount]) => {
         // Map recent IDs to quiz objects and limit to 5
         const quizzes = recentQuizIds
             .map(id => allQuizzes.find(q => q.id.toString() === id.toString()))
             .filter(q => q !== undefined)
             .slice(0, 5);
 
-        if (quizzes.length === 0) {
+        if (quizzes.length === 0 && weakCount === 0) {
             wrapper.classList.add('hidden');
             return;
         }
@@ -255,6 +255,31 @@ function renderQuizShortcuts() {
         wrapper.classList.remove('hidden');
         shortcutsContainer.innerHTML = '';
         
+        // Smart Review Card (Amber Gradient) - ONLY if weakCount > 0
+        if (weakCount > 0) {
+            const reviewCard = document.createElement('div');
+            reviewCard.className = `group block p-5 rounded-2xl border-2 border-transparent bg-gradient-to-br from-amber-500 to-orange-600 text-white shadow-xl shadow-amber-200/50 transition-all animate-in slide-in-from-left-5 duration-500 scale-100 active:scale-95 cursor-pointer md:col-span-2`;
+            reviewCard.innerHTML = `
+                <div class="flex items-start justify-between mb-4">
+                    <div class="p-2.5 rounded-xl bg-white/20 text-white backdrop-blur-md group-hover:rotate-12 transition-transform">
+                        <span class="material-symbols-outlined text-[24px]">psychology</span>
+                    </div>
+                    <div class="flex flex-col items-end">
+                        <span class="text-[10px] font-bold uppercase tracking-widest opacity-80">Smart Review</span>
+                        <span class="bg-white/20 px-2 py-0.5 rounded-full text-[10px] font-bold mt-1 backdrop-blur-sm">${weakCount} Topics</span>
+                    </div>
+                </div>
+                <h4 class="font-extrabold text-lg leading-tight">Master Your Weaknesses</h4>
+                <p class="text-sm opacity-90 mt-1">Personalized spaced-repetition session focused on your recently failed concepts.</p>
+                <div class="mt-4 flex items-center text-[10px] font-bold uppercase tracking-widest hover:translate-x-1 transition-transform">
+                    <span>Start Focused Session</span>
+                    <span class="material-symbols-outlined text-[14px] ml-1">bolt</span>
+                </div>
+            `;
+            reviewCard.onclick = () => window.location.href = 'quiz.html?mode=smart#mode=smart';
+            shortcutsContainer.appendChild(reviewCard);
+        }
+
         // Fun Mode Card
         const funCard = document.createElement('div');
         funCard.className = `group block p-5 rounded-2xl border-2 border-transparent bg-gradient-to-br from-primary to-secondary-container text-on-primary-container shadow-xl shadow-primary/20 transition-all animate-in zoom-in-95 duration-500 scale-100 active:scale-95 cursor-pointer`;

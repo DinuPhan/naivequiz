@@ -235,6 +235,21 @@
                             1</span>
                     </div>
                     <h2 id="question" class="text-xl sm:text-2xl font-bold text-inverse-surface leading-snug">...</h2>
+                    
+                    <!-- NEW: Active Recall / My Notes Section -->
+                    <div id="notes-container" class="hidden animate-in fade-in slide-in-from-top-2 duration-500">
+                        <div class="bg-amber-50/50 rounded-2xl p-4 border border-amber-200/30 space-y-3">
+                            <button id="toggle-notes-btn" class="flex items-center space-x-2 text-amber-900/60 hover:text-amber-900 transition-colors text-xs font-bold uppercase tracking-widest">
+                                <span class="material-symbols-outlined text-[18px]">sticky_note_2</span>
+                                <span>Show My Previous Notes</span>
+                                <span class="material-symbols-outlined text-[16px] transition-transform" id="notes-toggle-icon">expand_more</span>
+                            </button>
+                            <div id="notes-content" class="hidden pt-2 border-t border-amber-200/20">
+                                <p id="notes-text" class="text-sm italic text-amber-900/80 leading-relaxed"></p>
+                            </div>
+                        </div>
+                    </div>
+
                     <div id="answer-buttons" class="grid grid-cols-1 gap-3"></div>
                     <div id="result" class="text-center font-bold text-lg h-6"></div>
 
