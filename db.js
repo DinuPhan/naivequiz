@@ -1,6 +1,6 @@
 // aws-quiz/db.js
 const DB_NAME = 'QuizPlatformDB';
-const DB_VERSION = 1;
+const DB_VERSION = 2;
 
 let db;
 
@@ -32,6 +32,11 @@ function initDB() {
             // Store user settings
             if (!db.objectStoreNames.contains('settings')) {
                 db.createObjectStore('settings', { keyPath: 'id' });
+            }
+
+            // NEW in V2: Store quiz metadata
+            if (!db.objectStoreNames.contains('quizzes')) {
+                db.createObjectStore('quizzes', { keyPath: 'quiz_id' });
             }
         };
     });
@@ -111,14 +116,25 @@ async function importQuizData(jsonData) {
     }
 
     return new Promise((resolve, reject) => {
-        const transaction = db.transaction(['questions'], 'readwrite');
-        const store = transaction.objectStore('questions');
+        const transaction = db.transaction(['questions', 'quizzes'], 'readwrite');
+        const qStore = transaction.objectStore('questions');
+        const quizMetadataStore = transaction.objectStore('quizzes');
         let count = 0;
 
         const domains = jsonData.domains || [];
 
         jsonData.quizzes.forEach(quiz => {
             const tags = quiz.tags || [];
+            
+            // Save Quiz Metadata
+            quizMetadataStore.put({
+                quiz_id: quiz.quiz_id,
+                title: quiz.title,
+                tags: tags,
+                domains: domains,
+                quiz_type: quiz.quiz_type || 'json'
+            });
+
             quiz.questions.forEach(q => {
                 // Handle typo in original JSON
                 const qId = q.quesiton_id || q.question_id; 
@@ -128,9 +144,10 @@ async function importQuizData(jsonData) {
                     quiz_title: quiz.title,
                     domains: domains,
                     tags: tags,
+                    quiz_type: quiz.quiz_type || 'json',
                     ...q
                 };
-                store.put(record);
+                qStore.put(record);
                 count++;
             });
         });
@@ -138,6 +155,122 @@ async function importQuizData(jsonData) {
         transaction.oncomplete = () => resolve(count);
         transaction.onerror = (e) => reject(e.target.error);
     });
+}
+
+/**
+ * Simple Regex-based Markdown Quiz Parser (Option 1: Checklist Style)
+ */
+function parseMarkdownQuiz(mdText) {
+    const lines = mdText.split(/\r?\n/);
+    const result = {
+        domains: ["General"],
+        quizzes: []
+    };
+
+    let currentQuiz = {
+        quiz_id: Date.now().toString(),
+        title: "Imported Markdown Quiz",
+        tags: [],
+        quiz_type: 'markdown',
+        questions: []
+    };
+
+    let currentQuestion = null;
+    let inFrontmatter = false;
+    let frontmatterLines = [];
+
+    for (let i = 0; i < lines.length; i++) {
+        let line = lines[i];
+
+        // Handle Frontmatter
+        if (line.trim() === '---') {
+            if (!inFrontmatter && frontmatterLines.length === 0) {
+                inFrontmatter = true;
+                continue;
+            } else if (inFrontmatter) {
+                inFrontmatter = false;
+                // Parse frontmatter
+                frontmatterLines.forEach(fLine => {
+                    const separatorIndex = fLine.indexOf(':');
+                    if (separatorIndex !== -1) {
+                        const key = fLine.substring(0, separatorIndex).trim().toLowerCase();
+                        const value = fLine.substring(separatorIndex + 1).trim();
+                        
+                        if (key === 'title') currentQuiz.title = value;
+                        if (key === 'id') currentQuiz.quiz_id = value;
+                        if (key === 'tags') currentQuiz.tags = value.replace(/[\[\]]/g, '').split(',').map(s => s.trim());
+                        if (key === 'domains') result.domains = value.replace(/[\[\]]/g, '').split(',').map(s => s.trim());
+                    }
+                });
+                continue;
+            }
+        }
+        if (inFrontmatter) {
+            frontmatterLines.push(line);
+            continue;
+        }
+
+        // Handle Questions (# Question Text)
+        const qMatch = line.match(/^#+\s+(.*)/);
+        if (qMatch) {
+            if (currentQuestion) currentQuiz.questions.push(currentQuestion);
+            currentQuestion = {
+                question_id: (currentQuiz.questions.length + 1).toString(),
+                question_text: qMatch[1].trim(),
+                options: [],
+                correct_answer_id: []
+            };
+            continue;
+        }
+
+        // Handle Options (- [ ] Option Text)
+        const optMatch = line.match(/^[-*+]\s+\[([ xX])\]\s+(.*)/);
+        if (optMatch && currentQuestion) {
+            const isCorrect = optMatch[1].toLowerCase() === 'x';
+            const optText = optMatch[2].trim();
+            const optId = (currentQuestion.options.length + 1).toString();
+            
+            currentQuestion.options.push({
+                option_id: optId,
+                option_text: optText
+            });
+            
+            if (isCorrect) {
+                currentQuestion.correct_answer_id.push(optId);
+            }
+            continue;
+        }
+
+        // Handle Explanations (> Explanation Text)
+        if (line.trim().startsWith('>') && currentQuestion) {
+            const expText = line.trim().substring(1).trim();
+            currentQuestion.explanation = (currentQuestion.explanation ? currentQuestion.explanation + '\n' : '') + expText;
+            continue;
+        }
+
+        // Append multi-line question text/context
+        if (currentQuestion && line.trim() && !line.match(/^[-*+]\s+\[/)) {
+            // If we haven't started options or explanations, it's part of the question
+            if (currentQuestion.options.length === 0 && !currentQuestion.explanation) {
+                 currentQuestion.question_text += '\n' + line;
+            } else if (currentQuestion.explanation) {
+                // Multi-line explanation handled above, but this catch-all helps for non-quoted lines in explanation block?
+                // Actually, the regex above handles leading >. If user doesn't use > for every line, we might need more logic.
+            }
+        }
+    }
+
+    if (currentQuestion) currentQuiz.questions.push(currentQuestion);
+    
+    // Normalize correct_answer_id
+    currentQuiz.questions.forEach(q => {
+        if (q.correct_answer_id.length === 1) {
+            q.correct_answer_id = q.correct_answer_id[0];
+        }
+    });
+
+    result.quizzes.push(currentQuiz);
+    return result;
 }
 
 function checkAndLoadInitialData() {
@@ -211,7 +344,15 @@ function getQuizzes() {
             });
 
             const quizzes = Array.from(quizMap.entries()).map(([id, title]) => ({ id, title }));
-            quizzes.sort((a, b) => a.id - b.id);
+            quizzes.sort((a, b) => {
+                const aIsNum = !isNaN(a.id);
+                const bIsNum = !isNaN(b.id);
+                
+                if (aIsNum && bIsNum) return parseInt(a.id) - parseInt(b.id);
+                if (aIsNum) return -1;
+                if (bIsNum) return 1;
+                return a.id.localeCompare(b.id);
+            });
             resolve(quizzes);
         };
         request.onerror = (e) => reject(e.target.error);
@@ -262,8 +403,9 @@ function renderNavbar() {
         quizzes.forEach(quiz => {
             const a = document.createElement('a');
             const urlParams = new URLSearchParams(window.location.search);
-            const activeId = parseInt(urlParams.get('id'));
-            const isActive = activeId === quiz.id;
+            const rawActiveId = urlParams.get('id');
+            const activeId = (rawActiveId && !isNaN(rawActiveId)) ? parseInt(rawActiveId) : rawActiveId;
+            const isActive = activeId == quiz.id;
 
             a.href = `quiz.html?id=${quiz.id}#id=${quiz.id}`;
             a.className = `flex items-center space-x-3 px-4 py-3 rounded-xl transition-all group ${

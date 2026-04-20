@@ -4,7 +4,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.tailwindcss.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self';">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://cdn.jsdelivr.net https://cdn.jsdelivr.net/npm/marked/marked.min.js https://cdn.jsdelivr.net/npm/dompurify/dist/purify.min.js https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.tailwindcss.com https://cdn.jsdelivr.net; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' https://cdn.jsdelivr.net;">
     <title>Naive Quiz - Prepare for Any Certificate Interactively</title>
     <meta name="theme-color" content="#ffffff">
     <link rel="manifest" href="manifest.json">
@@ -15,6 +15,12 @@
         rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1"
         rel="stylesheet">
+    
+    <!-- Markdown & Highlighting Libraries -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github-dark.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dompurify/dist/purify.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js"></script>
     <script>
         tailwind.config = {
             darkMode: "class",
@@ -363,12 +369,12 @@
 
                         <div class="space-y-4">
                             <div class="relative">
-                                <input type="file" id="customDataInput" accept=".json" class="hidden">
+                                <input type="file" id="customDataInput" accept=".json,.md" class="hidden">
                                 <label for="customDataInput"
                                     class="w-full h-16 flex items-center justify-between px-6 bg-white rounded-2xl border-2 border-dashed border-primary/20 hover:border-primary/50 cursor-pointer transition-all group">
                                     <span
                                         class="text-primary/60 font-medium group-hover:text-primary transition-colors">Select
-                                        study JSON file...</span>
+                                        study JSON or MD file...</span>
                                     <span class="material-symbols-outlined text-primary/60">upload_file</span>
                                 </label>
                             </div>
@@ -476,7 +482,16 @@
 
             reader.onload = (e) => {
                 try {
-                    const data = JSON.parse(e.target.result);
+                    let data;
+                    if (file.name.endsWith('.md')) {
+                        // Markdown Import
+                        data = parseMarkdownQuiz(e.target.result);
+                        console.log("Parsed Markdown Data:", data);
+                    } else {
+                        // JSON Import
+                        data = JSON.parse(e.target.result);
+                    }
+
                     importQuizData(data).then(count => {
                         uploadStatus.innerText = `Successfully loaded ${count} questions!`;
                         uploadStatus.className = "text-center text-sm font-medium text-primary";
@@ -487,7 +502,8 @@
                         uploadStatus.className = "text-center text-sm font-medium text-red-500";
                     });
                 } catch (err) {
-                    uploadStatus.innerText = "Invalid JSON file format.";
+                    console.error("Import Error:", err);
+                    uploadStatus.innerText = "Format Error: " + err.message;
                     uploadStatus.className = "text-center text-sm font-medium text-red-500";
                 }
             };

@@ -24,6 +24,36 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentSelectedAnswers = [];
     let currentSelectedAnswersAll = [];
 
+    /**
+     * SECURE MARKDOWN RENDERER
+     * Uses Marked.js + DOMPurify for hacker-proof rich text
+     */
+    function renderRichText(element, md) {
+        if (!element || !md) return;
+        
+        // Check if libraries are loaded (CDN might fail or be blocked by CSP if misconfigured)
+        if (typeof marked === 'undefined' || typeof DOMPurify === 'undefined') {
+            element.textContent = md; // Fallback to safe text
+            return;
+        }
+
+        try {
+            const rawHtml = marked.parse(md);
+            const cleanHtml = DOMPurify.sanitize(rawHtml);
+            element.innerHTML = cleanHtml;
+
+            // Trigger Highlight.js for code blocks
+            if (typeof hljs !== 'undefined') {
+                element.querySelectorAll('pre code').forEach((block) => {
+                    hljs.highlightElement(block);
+                });
+            }
+        } catch (e) {
+            console.error("Rich rendering failed:", e);
+            element.textContent = md;
+        }
+    }
+
     let currentCorrectAnsArr = [];
     let currentCorrectAnsArrAll = [];
 
@@ -40,7 +70,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const urlParams = new URLSearchParams(window.location.search);
             const hashParams = new URLSearchParams(window.location.hash.substring(1));
 
-            const targetQuizId = parseInt(urlParams.get('id') || hashParams.get('id')) || 1;
+            const rawId = urlParams.get('id') || hashParams.get('id');
+            const targetQuizId = rawId ? (isNaN(rawId) ? rawId : parseInt(rawId)) : 1;
             const mode = urlParams.get('mode') || hashParams.get('mode');
 
             const finalizeLoad = (quizTitle) => {
@@ -211,7 +242,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         currentScore = 0;
         document.getElementById('question_no').innerText = `Question ${currentQuestionIndex + 1}`;
-        document.getElementById('question').innerText = question.question_text;
+        renderRichText(document.getElementById('question'), question.question_text);
         questionTextArr.push(question.question_text);
 
         // Handle Personal Notes (Active Recall)
@@ -250,7 +281,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const textSpan = document.createElement('span');
             textSpan.className = "flex-1 text-sm font-medium leading-relaxed";
-            textSpan.textContent = option.option_text;
+            renderRichText(textSpan, option.option_text);
 
             button.appendChild(labelSpan);
             button.appendChild(textSpan);
@@ -404,7 +435,7 @@ Please explain clearly and concisely why this option is correct or incorrect bas
 
 
             if (explanationContainer && explanationText && currentQAll.explanation && userSettings.showAnswers) {
-                explanationText.innerText = currentQAll.explanation;
+                renderRichText(explanationText, currentQAll.explanation);
                 explanationContainer.classList.remove('hidden');
             }
 
@@ -580,7 +611,8 @@ Please explain clearly and concisely why this option is correct or incorrect bas
                 </td>
             `;
 
-            row.querySelector(`#q-text-${index}`).textContent = `${index + 1}. ${question}`;
+            const qTextElement = row.querySelector(`#q-text-${index}`);
+            renderRichText(qTextElement, `${index + 1}. ${question}`);
             
             const uAnsContainer = row.querySelector(`#u-ans-${index}`);
             currentSelectedAnswersAll[index].forEach(ans => {
