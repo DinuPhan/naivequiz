@@ -61,7 +61,51 @@ function getSettings() {
     });
 }
 
-function importQuizData(jsonData) {
+function validateQuizData(data) {
+    if (!data || typeof data !== 'object') return 'Invalid JSON structure';
+    if (!Array.isArray(data.quizzes)) return 'Missing "quizzes" array';
+    
+    // Safety caps
+    let totalQuestions = 0;
+    
+    for (const quiz of data.quizzes) {
+        if (!quiz.quiz_id || !quiz.title) return `Quiz missing ID or title: ${JSON.stringify(quiz).substring(0, 50)}`;
+        if (!Array.isArray(quiz.questions)) return `Quiz ${quiz.quiz_id} missing "questions" array`;
+        
+        totalQuestions += quiz.questions.length;
+        if (totalQuestions > 500) return 'Import too large (max 500 questions per file)';
+
+        for (const q of quiz.questions) {
+            const qId = q.quesiton_id || q.question_id;
+            if (!qId || !q.question_text || !Array.isArray(q.options)) {
+                return `Question invalid in quiz ${quiz.quiz_id}: missing ID, text, or options`;
+            }
+            if (q.options.length < 2) return `Question ${qId} must have at least 2 options`;
+            if (q.correct_answer_id === undefined) return `Question ${qId} is missing a correct answer`;
+        }
+    }
+    return null; // Valid
+}
+
+async function importQuizData(jsonData) {
+    const error = validateQuizData(jsonData);
+    if (error) {
+        throw new Error(`Data validation failed: ${error}`);
+    }
+
+    // Check for conflicts (simple quiz_id check)
+    const existingQuizzes = await getQuizzes();
+    const importedIds = jsonData.quizzes.map(q => q.quiz_id);
+    const conflicts = existingQuizzes.filter(q => importedIds.includes(q.id));
+
+    if (conflicts.length > 0) {
+        const confirmMsg = `The following modules already exist: ${conflicts.map(c => c.title).join(', ')}. Overwrite them?`;
+        if (!confirm(confirmMsg)) {
+            console.log('Import cancelled by user due to conflicts.');
+            return 0;
+        }
+    }
+
     return new Promise((resolve, reject) => {
         const transaction = db.transaction(['questions'], 'readwrite');
         const store = transaction.objectStore('questions');
@@ -205,7 +249,11 @@ function renderNavbar() {
 
     return getQuizzes().then(quizzes => {
         // Clear skeleton loaders or existing items
-        navList.innerHTML = `<div class="px-2 py-3 text-xs uppercase tracking-widest font-bold opacity-40">Available Modules</div>`;
+        navList.innerHTML = '';
+        const header = document.createElement('div');
+        header.className = "px-2 py-3 text-xs uppercase tracking-widest font-bold opacity-40";
+        header.textContent = "Available Modules";
+        navList.appendChild(header);
         
         quizzes.forEach(quiz => {
             const a = document.createElement('a');
@@ -220,12 +268,16 @@ function renderNavbar() {
                 : 'text-on-surface-variant hover:bg-primary/5 hover:text-primary'
             }`;
 
-            a.innerHTML = `
-                <span class="material-symbols-outlined text-[20px] transition-transform group-hover:scale-110">
-                    ${isActive ? 'auto_stories' : 'menu_book'}
-                </span>
-                <span class="font-medium truncate">${quiz.title}</span>
-            `;
+            const iconSpan = document.createElement('span');
+            iconSpan.className = "material-symbols-outlined text-[20px] transition-transform group-hover:scale-110";
+            iconSpan.textContent = isActive ? 'auto_stories' : 'menu_book';
+
+            const titleSpan = document.createElement('span');
+            titleSpan.className = "font-medium truncate";
+            titleSpan.textContent = quiz.title;
+
+            a.appendChild(iconSpan);
+            a.appendChild(titleSpan);
             navList.appendChild(a);
         });
     });
@@ -266,7 +318,7 @@ function renderQuizShortcuts() {
                     </div>
                     <div class="flex flex-col items-end">
                         <span class="text-[10px] font-bold uppercase tracking-widest opacity-80">Smart Review</span>
-                        <span class="bg-white/20 px-2 py-0.5 rounded-full text-[10px] font-bold mt-1 backdrop-blur-sm">${weakCount} Topics</span>
+                        <span class="bg-white/20 px-2 py-0.5 rounded-full text-[10px] font-bold mt-1 backdrop-blur-sm" id="smart-review-count"></span>
                     </div>
                 </div>
                 <h4 class="font-extrabold text-lg leading-tight">Master Your Weaknesses</h4>
@@ -276,6 +328,7 @@ function renderQuizShortcuts() {
                     <span class="material-symbols-outlined text-[14px] ml-1">bolt</span>
                 </div>
             `;
+            reviewCard.querySelector('#smart-review-count').textContent = `${weakCount} Topics`;
             reviewCard.onclick = () => window.location.href = 'quiz.html?mode=smart#mode=smart';
             shortcutsContainer.appendChild(reviewCard);
         }
@@ -316,9 +369,9 @@ function renderQuizShortcuts() {
                     }">
                         <span class="material-symbols-outlined text-[20px]">${isSelected ? 'rocket_launch' : 'play_arrow'}</span>
                     </div>
-                    <span class="text-[10px] font-bold uppercase tracking-widest opacity-30 group-hover:opacity-60 transition-opacity">Quiz ID: ${quiz.id}</span>
+                    <span class="text-[10px] font-bold uppercase tracking-widest opacity-30 group-hover:opacity-60 transition-opacity" id="card-id-${quiz.id}"></span>
                 </div>
-                <h4 class="font-bold text-inverse-surface leading-tight transition-colors line-clamp-2 ${isSelected ? 'text-primary' : 'group-hover:text-primary'}">${quiz.title}</h4>
+                <h4 class="font-bold text-inverse-surface leading-tight transition-colors line-clamp-2 ${isSelected ? 'text-primary' : 'group-hover:text-primary'}" id="card-title-${quiz.id}"></h4>
                 <div class="mt-4 flex items-center text-[10px] font-bold uppercase tracking-widest text-primary ${isSelected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100 transition-all translate-y-2 group-hover:translate-y-0'}">
                     <span class="${isSelected ? 'animate-text-reveal' : ''}">${isSelected ? 'Click again to Start' : 'Select Module'}</span>
                     <span class="material-symbols-outlined text-[14px] ml-1 ${isSelected ? 'animate-bounce' : ''}">
@@ -326,6 +379,8 @@ function renderQuizShortcuts() {
                     </span>
                 </div>
             `;
+            card.querySelector(`#card-id-${quiz.id}`).textContent = `Quiz ID: ${quiz.id}`;
+            card.querySelector(`#card-title-${quiz.id}`).textContent = quiz.title;
 
             card.onclick = () => {
                 const isAlreadySelected = localStorage.getItem('selectedQuizId') === quiz.id.toString();

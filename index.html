@@ -4,6 +4,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.tailwindcss.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self';">
     <title>Naive Quiz - Prepare for Any Certificate Interactively</title>
     <meta name="theme-color" content="#ffffff">
     <link rel="manifest" href="manifest.json">
@@ -74,6 +75,7 @@
         }
 
         @media (min-width: 1024px) {
+
             body.sidebar-expanded #main-container,
             body.sidebar-expanded header {
                 margin-left: 18rem;
@@ -185,7 +187,7 @@
                 <div
                     class="flex items-center space-x-2 bg-primary-container/30 px-3 py-1 rounded-full border border-primary/20">
                     <span class="w-2 h-2 rounded-full bg-primary animate-pulse w-max"></span>
-                    <span class="text-xs uppercase tracking-widest font-bold text-primary">System Online</span>
+                    <span class="text-xs uppercase tracking-widest font-bold text-primary">Naive mode: ON</span>
                 </div>
             </div>
         </header>

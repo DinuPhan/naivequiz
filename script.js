@@ -222,10 +222,16 @@ document.addEventListener('DOMContentLoaded', () => {
             button.className = "group w-full min-h-[64px] flex items-center px-6 py-4 rounded-3xl border-2 border-surface-container-highest bg-white hover:border-primary/40 hover:bg-primary/5 transition-all text-left space-x-4 animate-in fade-in slide-in-from-bottom-2 duration-300";
             button.style.animationDelay = `${index * 100}ms`;
 
-            button.innerHTML = `
-                <span class="flex-shrink-0 w-8 h-8 rounded-lg bg-surface-container-highest text-on-surface-variant font-bold flex items-center justify-center group-hover:bg-primary group-hover:text-on-primary transition-all uppercase text-sm">${labels[index] || index + 1}</span>
-                <span class="flex-1 text-sm font-medium leading-relaxed">${option.option_text}</span>
-            `;
+            const labelSpan = document.createElement('span');
+            labelSpan.className = "flex-shrink-0 w-8 h-8 rounded-lg bg-surface-container-highest text-on-surface-variant font-bold flex items-center justify-center group-hover:bg-primary group-hover:text-on-primary transition-all uppercase text-sm";
+            labelSpan.textContent = labels[index] || index + 1;
+
+            const textSpan = document.createElement('span');
+            textSpan.className = "flex-1 text-sm font-medium leading-relaxed";
+            textSpan.textContent = option.option_text;
+
+            button.appendChild(labelSpan);
+            button.appendChild(textSpan);
 
             answerButtons.appendChild(button);
 
@@ -525,7 +531,7 @@ Please explain clearly and concisely why this option is correct or incorrect bas
 
             row.innerHTML = `
                 <td class="px-8 py-6">
-                    <div class="font-bold text-inverse-surface leading-tight mb-1">${index + 1}. ${question}</div>
+                    <div class="font-bold text-inverse-surface leading-tight mb-1" id="q-text-${index}"></div>
                     <div class="text-[10px] uppercase tracking-wider font-bold opacity-30">Analytical Review</div>
                     <button class="mt-3 text-xs font-bold text-primary flex items-center space-x-1 hover:bg-primary/10 px-3 py-1.5 rounded-lg transition-colors border border-primary/20 copy-ai-btn">
                         <span class="material-symbols-outlined text-[14px]">psychology_alt</span>
@@ -533,17 +539,47 @@ Please explain clearly and concisely why this option is correct or incorrect bas
                     </button>
                 </td>
                 <td class="px-6 py-6 text-sm">
-                    <div class="space-y-1">${currentSelectedAnswersAll[index].map(ans => `<p class="flex items-center space-x-2"><span class="w-1.5 h-1.5 rounded-full ${isCorrect ? 'bg-success' : 'bg-error'}"></span><span>${ans}</span></p>`).join('')}</div>
+                    <div class="space-y-1" id="u-ans-${index}"></div>
                 </td>
                 <td class="px-6 py-6 text-sm">
-                    <div class="space-y-1 opacity-60">${currentCorrectAnsArrAll[index].map(ans => `<p class="flex items-center space-x-2"><span class="w-1.5 h-1.5 rounded-full bg-primary"></span><span>${ans}</span></p>`).join('')}</div>
+                    <div class="space-y-1 opacity-60" id="c-ans-${index}"></div>
                 </td>
                 <td class="px-8 py-6 text-right">
-                    <span class="inline-flex px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest ${isCorrect ? 'bg-success/10 text-success' : 'bg-error/10 text-error'}">
-                        ${correct_or_incorrect[index]}
-                    </span>
+                    <span class="inline-flex px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest" id="status-${index}"></span>
                 </td>
             `;
+
+            row.querySelector(`#q-text-${index}`).textContent = `${index + 1}. ${question}`;
+            
+            const uAnsContainer = row.querySelector(`#u-ans-${index}`);
+            currentSelectedAnswersAll[index].forEach(ans => {
+                const p = document.createElement('p');
+                p.className = "flex items-center space-x-2";
+                const dot = document.createElement('span');
+                dot.className = `w-1.5 h-1.5 rounded-full ${isCorrect ? 'bg-success' : 'bg-error'}`;
+                const text = document.createElement('span');
+                text.textContent = ans;
+                p.appendChild(dot);
+                p.appendChild(text);
+                uAnsContainer.appendChild(p);
+            });
+
+            const cAnsContainer = row.querySelector(`#c-ans-${index}`);
+            currentCorrectAnsArrAll[index].forEach(ans => {
+                const p = document.createElement('p');
+                p.className = "flex items-center space-x-2";
+                const dot = document.createElement('span');
+                dot.className = "w-1.5 h-1.5 rounded-full bg-primary";
+                const text = document.createElement('span');
+                text.textContent = ans;
+                p.appendChild(dot);
+                p.appendChild(text);
+                cAnsContainer.appendChild(p);
+            });
+
+            const statusLabel = row.querySelector(`#status-${index}`);
+            statusLabel.className += ` ${isCorrect ? 'bg-success/10 text-success' : 'bg-error/10 text-error'}`;
+            statusLabel.textContent = correct_or_incorrect[index];
 
             const btn = row.querySelector('.copy-ai-btn');
             btn.onclick = () => {
