@@ -55,7 +55,7 @@ function getSettings() {
         const request = store.get('user_prefs');
         request.onsuccess = () => {
             // Default settings
-            resolve(request.result || { correctionStyle: 'adaptive' }); 
+            resolve(request.result || { correctionStyle: 'adaptive', showAnswers: true }); 
         };
         request.onerror = (e) => reject(e.target.error);
     });

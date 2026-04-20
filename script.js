@@ -19,6 +19,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let threeanswers = false;
     let totalScore = 0;
     let currentScore = 0;
+    let userSettings = { showAnswers: true };
 
     let currentSelectedAnswers = [];
     let currentSelectedAnswersAll = [];
@@ -45,7 +46,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const finalizeLoad = (quizTitle) => {
                 if (questions.length === 0) {
                     const titleElem = document.getElementById('quiz-title');
-                    if (titleElem) titleElem.innerText = "No topics for review!";
+                    if (titleElem) titleElem.innerText = "No questions for review!";
                     if (introSection) introSection.classList.remove('hidden');
                     return reject("No questions found");
                 }
@@ -67,7 +68,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 getReviewQuestions().then(reviewQuestions => {
                     questions = reviewQuestions;
                     currentQuizId = 'smart';
-                    finalizeLoad("Smart Review (Weak Topics)");
+                    finalizeLoad("Smart Review (Wrong Questions)");
                 }).catch(reject);
                 return;
             }
@@ -109,11 +110,48 @@ document.addEventListener('DOMContentLoaded', () => {
                         if (introSection) introSection.classList.add('hidden');
                         if (quizApp) quizApp.classList.remove('hidden');
                         document.getElementById('quiz-progress-container')?.classList.remove('hidden');
+                        initSettings();
                         loadNextQuestion();
                     });
                 }
             })
             .catch(error => console.error('Error loading quiz data:', error));
+    }
+
+    function initSettings() {
+        if (typeof getSettings === 'function') {
+            getSettings().then(settings => {
+                userSettings = settings;
+                syncToggleUI();
+            });
+        }
+        
+        const toggleBtn = document.getElementById('show-answers-toggle');
+        if (toggleBtn) {
+            toggleBtn.addEventListener('click', () => {
+                userSettings.showAnswers = !userSettings.showAnswers;
+                if (typeof saveSettings === 'function') {
+                    saveSettings(userSettings);
+                }
+                syncToggleUI();
+            });
+        }
+    }
+
+    function syncToggleUI() {
+        const bg = document.getElementById('show-answers-bg');
+        const dot = document.getElementById('show-answers-dot');
+        const label = document.getElementById('show-answers-label');
+        
+        if (userSettings.showAnswers) {
+            if (bg) bg.classList.replace('bg-surface-container-highest', 'bg-primary');
+            if (dot) dot.classList.replace('translate-x-0', 'translate-x-4');
+            if (label) label.innerText = 'On';
+        } else {
+            if (bg) bg.classList.replace('bg-primary', 'bg-surface-container-highest');
+            if (dot) dot.classList.replace('translate-x-4', 'translate-x-0');
+            if (label) label.innerText = 'Off';
+        }
     }
 
     nextBtn.addEventListener('click', loadNextQuestion);
@@ -164,7 +202,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (notesContainer && question.feynman_explanation) {
             notesContainer.classList.remove('hidden');
             notesText.innerText = question.feynman_explanation;
-            
+
             toggleBtn.onclick = () => {
                 const isHidden = notesContent.classList.contains('hidden');
                 if (isHidden) {
@@ -234,6 +272,14 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         selectedAnswers.push(selectedBtn);
+        
+        // Show selection feedback even if showAnswers is false
+        if (!userSettings.showAnswers) {
+            selectedBtn.classList.replace('border-surface-container-highest', 'border-primary/40');
+            selectedBtn.classList.add('bg-primary/5');
+            labelSpan.classList.replace('bg-surface-container-highest', 'bg-primary/40');
+            labelSpan.classList.replace('text-on-surface-variant', 'text-on-primary');
+        }
 
         let questionComplete = false;
         if (twoanswers && selectedAnswers.length === 2) questionComplete = true;
@@ -247,10 +293,10 @@ document.addEventListener('DOMContentLoaded', () => {
             Array.from(answerButtons.children).forEach(button => {
                 button.disabled = true;
                 // Reveal correct answers if not already selected
-                if (button.dataset.correct === "true" && !button.classList.contains('border-success')) {
-                    button.classList.replace('border-surface-container-highest', 'border-success/40');
-                    button.children[0].classList.replace('bg-surface-container-highest', 'bg-success/40');
-                }
+                    if (button.dataset.correct === "true" && !button.classList.contains('border-success') && userSettings.showAnswers) {
+                        button.classList.replace('border-surface-container-highest', 'border-success/40');
+                        button.children[0].classList.replace('bg-surface-container-highest', 'bg-success/40');
+                    }
 
                 // Add AI Shortcut button
                 const optionText = button.children[1].innerText;
@@ -303,12 +349,16 @@ Please explain clearly and concisely why this option is correct or incorrect bas
 
             if (result === "Correct") {
                 currentScore = 1;
-                resultDiv.innerText = "Excellent!";
-                resultDiv.className = "text-center font-bold text-lg text-success h-6 animate-pulse";
+                if (userSettings.showAnswers) {
+                    resultDiv.innerText = "Excellent!";
+                    resultDiv.className = "text-center font-bold text-lg text-success h-6 animate-pulse";
+                }
             } else {
                 currentScore = 0;
-                resultDiv.innerText = "Keep going, you'll get it!";
-                resultDiv.className = "text-center font-bold text-lg text-error h-6";
+                if (userSettings.showAnswers) {
+                    resultDiv.innerText = "Keep going, you'll get it!";
+                    resultDiv.className = "text-center font-bold text-lg text-error h-6";
+                }
             }
 
             // Show explanation if available in data
@@ -316,7 +366,7 @@ Please explain clearly and concisely why this option is correct or incorrect bas
             const explanationText = document.getElementById('explanation-text');
 
 
-            if (explanationContainer && explanationText && currentQAll.explanation) {
+            if (explanationContainer && explanationText && currentQAll.explanation && userSettings.showAnswers) {
                 explanationText.innerText = currentQAll.explanation;
                 explanationContainer.classList.remove('hidden');
             }
@@ -330,7 +380,7 @@ Please explain clearly and concisely why this option is correct or incorrect bas
             const currentQ = questions[questionHistory[currentQuestionIndex]];
             const qId = `${currentQuizId || 'unknown'}_${currentQ.quesiton_id || currentQ.question_id}`;
 
-            if (isWrong) {
+            if (isWrong && userSettings.showAnswers) {
                 nextBtn.classList.add('hidden');
                 const feynmanSection = document.getElementById('feynman-section');
                 const feynmanTextarea = document.getElementById('feynman-textarea');
@@ -373,7 +423,7 @@ Please explain clearly and concisely why this option is correct or incorrect bas
                     feynmanSection.classList.add('hidden');
                     loadNextQuestion();
                 };
-            } else {
+            } else if (!isWrong && userSettings.showAnswers) {
                 if (currentQuizId !== 'fun') {
                     getProgress(qId).then(prevData => {
                         const newData = calculateSM2(4, prevData);
@@ -385,6 +435,19 @@ Please explain clearly and concisely why this option is correct or incorrect bas
                     });
                 }
                 loadNextQuestion();
+            } else {
+                // If answers are hidden, still save SM-2 but stay silent
+                if (currentQuizId !== 'fun') {
+                    getProgress(qId).then(prevData => {
+                        const quality = isWrong ? 2 : 4;
+                        const newData = calculateSM2(quality, prevData);
+                        if (prevData && prevData.feynman_explanation) {
+                            newData.feynman_explanation = prevData.feynman_explanation;
+                        }
+                        if (typeof saveProgress === 'function') saveProgress(qId, newData);
+                    });
+                }
+                setTimeout(loadNextQuestion, 400); // Small delay for UX if auto-advancing
             }
         }
     }
