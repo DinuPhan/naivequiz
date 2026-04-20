@@ -122,7 +122,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (typeof getSettings === 'function') {
             getSettings().then(settings => {
                 userSettings = settings;
-                syncToggleUI();
+                syncSettingsUI();
             });
         }
         
@@ -133,12 +133,23 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (typeof saveSettings === 'function') {
                     saveSettings(userSettings);
                 }
-                syncToggleUI();
+                syncSettingsUI();
             });
         }
+
+        // Expertise Level Selection
+        document.querySelectorAll('.expertise-btn').forEach(btn => {
+            btn.onclick = () => {
+                userSettings.expertiseLevel = btn.dataset.level;
+                if (typeof saveSettings === 'function') {
+                    saveSettings(userSettings);
+                }
+                syncSettingsUI();
+            };
+        });
     }
 
-    function syncToggleUI() {
+    function syncSettingsUI() {
         const bg = document.getElementById('show-answers-bg');
         const dot = document.getElementById('show-answers-dot');
         const label = document.getElementById('show-answers-label');
@@ -152,6 +163,17 @@ document.addEventListener('DOMContentLoaded', () => {
             if (dot) dot.classList.replace('translate-x-4', 'translate-x-0');
             if (label) label.innerText = 'Off';
         }
+
+        // Expertise Level UI
+        document.querySelectorAll('.expertise-btn').forEach(btn => {
+            if (btn.dataset.level === userSettings.expertiseLevel) {
+                btn.classList.add('bg-primary', 'text-on-primary', 'shadow-sm');
+                btn.classList.remove('hover:bg-white/50', 'text-on-surface-variant');
+            } else {
+                btn.classList.remove('bg-primary', 'text-on-primary', 'shadow-sm');
+                btn.classList.add('hover:bg-white/50', 'text-on-surface-variant');
+            }
+        });
     }
 
     nextBtn.addEventListener('click', loadNextQuestion);
@@ -321,7 +343,16 @@ document.addEventListener('DOMContentLoaded', () => {
                     const domainCtx = currentQAll.domains && currentQAll.domains.length ? `\nDomain: ${currentQAll.domains.join(', ')}` : '';
                     const tagsCtx = currentQAll.tags && currentQAll.tags.length ? `\nTags: ${currentQAll.tags.join(', ')}` : '';
 
-                    const prompt = `Act as an expert Tutor.${domainCtx}${tagsCtx}
+                    let expertiseInstruction = "Act as an expert Tutor.";
+                    if (userSettings.expertiseLevel === 'eli5') {
+                        expertiseInstruction = "Act as a friendly tutor and explain this concept like I am five years old, using simple analogies and no technical jargon.";
+                    } else if (userSettings.expertiseLevel === '18') {
+                        expertiseInstruction = "Act as an academic tutor and explain this concept clearly for an 18-year-old student, being direct and educational.";
+                    } else {
+                        expertiseInstruction = "Act as a professional industry expert. Use precise technical terminology and be extremely concise and efficient in your explanation.";
+                    }
+
+                    const prompt = `${expertiseInstruction}${domainCtx}${tagsCtx}
 Question: ${currentQAll.question_text}
 
 Options:
@@ -586,7 +617,16 @@ Please explain clearly and concisely why this option is correct or incorrect bas
                 const domainCtx = currentQAll.domains && currentQAll.domains.length ? `\nDomain: ${currentQAll.domains.join(', ')}` : '';
                 const tagsCtx = currentQAll.tags && currentQAll.tags.length ? `\nTags: ${currentQAll.tags.join(', ')}` : '';
 
-                const prompt = `Act as an expert Tutor.${domainCtx}${tagsCtx}\nQuestion: ${question}\n\nOptions:\n${currentQAll.options.map(o => '- ' + o.option_text).join('\n')}\n\nMy Selected Answer: ${currentSelectedAnswersAll[index].join(', ') || 'None'}\nCorrect Answer: ${currentCorrectAnsArrAll[index].join(', ')}\n\nPlease explain clearly and concisely why this is the correct answer based on core concepts and best practices.`;
+                let expertiseInstruction = "Act as an expert Tutor.";
+                if (userSettings.expertiseLevel === 'eli5') {
+                    expertiseInstruction = "Act as a friendly tutor and explain this concept like I am five years old, using simple analogies and no technical jargon.";
+                } else if (userSettings.expertiseLevel === '18') {
+                    expertiseInstruction = "Act as an academic tutor and explain this concept clearly for an 18-year-old student, being direct and educational.";
+                } else {
+                    expertiseInstruction = "Act as a professional industry expert. Use precise technical terminology and be extremely concise and efficient in your explanation.";
+                }
+
+                const prompt = `${expertiseInstruction}${domainCtx}${tagsCtx}\nQuestion: ${question}\n\nOptions:\n${currentQAll.options.map(o => '- ' + o.option_text).join('\n')}\n\nMy Selected Answer: ${currentSelectedAnswersAll[index].join(', ') || 'None'}\nCorrect Answer: ${currentCorrectAnsArrAll[index].join(', ')}\n\nPlease explain clearly and concisely why this is the correct answer based on core concepts and best practices.`;
 
                 navigator.clipboard.writeText(prompt).then(() => {
                     const span = btn.querySelector('span:last-child');
