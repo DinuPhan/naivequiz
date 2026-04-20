@@ -287,50 +287,32 @@
 
                                 <div id="prompt-template"
                                     class="text-xs font-mono text-left leading-relaxed opacity-80 h-32 overflow-y-auto scrollbar-hide pr-2 select-all">
-                                    Act as an Expert Educator and JSON Architect. Use the provided book sources as your
-                                    primary knowledge base.
+                                    Act as an Expert Content Architect. Generate a high-quality quiz based on the provided material.
+                                    
+Format: Markdown Checklist Style (Extremely Robust)
+- Use YAML Frontmatter for metadata (title, tags, domains). No ID field needed.
+- Questions start with '#' (H1 heading).
+- Options use '- [ ]' for incorrect and '- [x]' for correct.
+- Explanations use '>' (Blockquotes) immediately after the options.
+- You CAN use code blocks (js etc), bold (**text**), and lists within questions/explanations.
 
-                                    Goal: Generate a comprehensive JSON quiz based ONLY on the attached sources.
+Example Output:
+---
+title: Advanced Cloud Architecture
+tags: [AWS, Scaling, Security]
+domains: [Architecture]
+---
 
-                                    Parameters:
-                                    - Topic/Chapters: {{TOPIC}}
-                                    - Difficulty: {{DIFFICULTY}} (1=Easy, 10=Expert)
-                                    - Style: {{STYLE}}
+# Which service provides the highest durability for static assets?
 
-                                    Evaluation Protocol (MANDATORY):
-                                    1. **Source Mapping:** For every question, identify the exact page/paragraph in the
-                                    source.
-                                    2. **Answer Verification:** Double-check that the 'correct_answer_id' points to an
-                                    option that is EXPLICITLY supported by the text.
-                                    3. **Plausible Distractors:** Generate wrong options that look correct but contain
-                                    subtle errors present in misconceptions.
-                                    4. **Mandatory Field Check:** Every question MUST have a 'correct_answer_id' (or an
-                                    array for multiple choice) and an 'explanation'.
+- [ ] Amazon EBS
+- [x] Amazon S3
+- [ ] Amazon EFS
+- [ ] AWS Snowball
 
-                                    JSON Schema:
-                                    {
-                                    "domains": ["Primary Subject/Domain"],
-                                    "quizzes": [{
-                                    "quiz_id": 1,
-                                    "title": "Module Title",
-                                    "tags": ["Concept1", "Concept2"],
-                                    "questions": [{
-                                    "question_id": 1,
-                                    "question_text": "...",
-                                    "options": [
-                                    { "option_id": 1, "option_text": "..." }
-                                    ],
-                                    "correct_answer_id": 1,
-                                    "explanation": "Brief reasoning for the correct answer, citing the source if
-                                    possible."
-                                    }]
-                                    }]
-                                    }
+> Amazon S3 is designed for 99.999999999% (11 9's) of durability.
 
-                                    Instructions:
-                                    - Provide ONLY raw JSON. No markdown backticks, no header/footer.
-                                    - If multiple answers are correct, 'correct_answer_id' MUST be an array: [1, 2].
-                                    - Ensure high concept density and strictly technical language from the source.
+[Insert Source Content Here]
                                 </div>
 
                                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">

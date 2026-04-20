@@ -96,6 +96,17 @@ function validateQuizData(data) {
     return null; // Valid
 }
 
+function slugify(text) {
+    if (!text) return 'untitled-quiz-' + Date.now();
+    return text.toString().toLowerCase()
+        .trim()
+        .replace(/\s+/g, '-')           // Replace spaces with -
+        .replace(/[^\w\-]+/g, '')       // Remove all non-word chars
+        .replace(/\-\-+/g, '-')         // Replace multiple - with single -
+        .replace(/^-+/, '')             // Trim - from start of text
+        .replace(/-+$/, '');            // Trim - from end of text
+}
+
 async function importQuizData(jsonData) {
     const error = validateQuizData(jsonData);
     if (error) {
@@ -202,6 +213,14 @@ function parseMarkdownQuiz(mdText) {
                         if (key === 'domains') result.domains = value.replace(/[\[\]]/g, '').split(',').map(s => s.trim());
                     }
                 });
+
+                // IMPLICIT ID GENERATION
+                if (!currentQuiz.quiz_id && currentQuiz.title) {
+                    currentQuiz.quiz_id = slugify(currentQuiz.title);
+                } else if (!currentQuiz.quiz_id) {
+                    currentQuiz.quiz_id = 'quiz-' + Date.now();
+                }
+
                 continue;
             }
         }
@@ -273,23 +292,44 @@ function parseMarkdownQuiz(mdText) {
     return result;
 }
 
-function checkAndLoadInitialData() {
+async function checkAndLoadInitialData() {
     return new Promise((resolve, reject) => {
         const transaction = db.transaction(['questions'], 'readonly');
         const store = transaction.objectStore('questions');
         const request = store.count();
 
-        request.onsuccess = () => {
+        request.onsuccess = async () => {
             if (request.result === 0) {
-                // DB is empty, load default questions
-                fetch('questions-bank/AWS/AWS_CLF-C02.json')
-                    .then(res => res.json())
-                    .then(data => importQuizData(data))
-                    .then(count => {
-                        console.log(`Imported ${count} default questions.`);
-                        resolve();
-                    })
-                    .catch(reject);
+                console.log('DB empty. Loading default modules from manifest...');
+                try {
+                    const manifestRes = await fetch('manifest.json');
+                    if (!manifestRes.ok) throw new Error('Could not find manifest.json');
+                    
+                    const manifest = await manifestRes.json();
+                    let totalImported = 0;
+
+                    for (const filePath of manifest) {
+                        try {
+                            const mdRes = await fetch(filePath);
+                            if (!mdRes.ok) continue;
+                            const mdText = await mdRes.text();
+                            const data = parseMarkdownQuiz(mdText);
+                            const count = await importQuizData(data);
+                            totalImported += count;
+                            
+                            const fileName = filePath.split('/').pop();
+                            console.log(`- Imported ${fileName} (${count} questions)`);
+                        } catch (fileErr) {
+                            console.error(`Failed to load default module ${filePath}:`, fileErr);
+                        }
+                    }
+
+                    console.log(`Initial load complete. Total questions: ${totalImported}`);
+                    resolve();
+                } catch (err) {
+                    console.error('Initial data load failed:', err);
+                    reject(err);
+                }
             } else {
                 resolve(); // Data already exists
             }
