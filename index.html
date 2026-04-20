@@ -296,6 +296,11 @@ Format: Markdown Checklist Style (Extremely Robust)
 - Explanations use '>' (Blockquotes) immediately after the options.
 - You CAN use code blocks (js etc), bold (**text**), and lists within questions/explanations.
 
+Constraints (CRITICAL):
+- Do NOT include any "Suggested topics", "Follow-up questions", "Explorations", or additional study guide text.
+- The output MUST terminate immediately after the last explanation blockquote.
+- Ensure only valid quiz content is returned.
+
 Example Output:
 ---
 title: Advanced Cloud Architecture
@@ -548,9 +553,10 @@ Correction Protocol:
    - Use technical language from the source.
 5. Consistency: Ensure all 'option_id' values are integers and sequential within each question.
 
-Instructions:
-- I will provide the JSON below.
-- Return ONLY the corrected raw JSON block. No introductory text, no markdown code blocks.
+Format Constraints (CRITICAL):
+- Return ONLY the corrected raw JSON block.
+- No introductory text, no markdown code blocks, and NO "Suggested topics" or "Follow-up questions".
+- Stop the output immediately at the end of the JSON structure.
 - Preserve the overall 'quizzes' structure.`;
 
         if (copyFineTuneBtn) {

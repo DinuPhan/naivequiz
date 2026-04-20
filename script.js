@@ -586,28 +586,32 @@ Please explain clearly and concisely why this option is correct or incorrect bas
 
         questionTextArr.forEach((question, index) => {
             const row = document.createElement('tr');
-            row.className = "hover:bg-surface/50 transition-colors";
-
             const isCorrect = correct_or_incorrect[index] === "Correct";
+            row.className = `transition-colors border-b border-black/5 ${isCorrect ? 'bg-success/5 hover:bg-success/10' : 'bg-error/5 hover:bg-error/10'}`;
+
             const currentQAll = questions[questionHistory[index]];
 
             row.innerHTML = `
                 <td class="px-8 py-6">
-                    <div class="font-bold text-inverse-surface leading-tight mb-1" id="q-text-${index}"></div>
-                    <div class="text-[10px] uppercase tracking-wider font-bold opacity-30">Analytical Review</div>
-                    <button class="mt-3 text-xs font-bold text-primary flex items-center space-x-1 hover:bg-primary/10 px-3 py-1.5 rounded-lg transition-colors border border-primary/20 copy-ai-btn">
-                        <span class="material-symbols-outlined text-[14px]">psychology_alt</span>
-                        <span>Ask AI</span>
-                    </button>
+                    <div class="flex items-start space-x-3">
+                        <div class="mt-1 flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center ${isCorrect ? 'bg-success text-white' : 'bg-error text-white'}">
+                            <span class="material-symbols-outlined text-[14px] font-bold">${isCorrect ? 'check' : 'close'}</span>
+                        </div>
+                        <div>
+                            <div class="font-bold text-inverse-surface leading-tight mb-1" id="q-text-${index}"></div>
+                            <div class="text-[10px] uppercase tracking-wider font-bold opacity-30">Analytical Review</div>
+                            <button class="mt-3 text-xs font-bold text-primary flex items-center space-x-1 hover:bg-primary/10 px-3 py-1.5 rounded-lg transition-colors border border-primary/20 copy-ai-btn">
+                                <span class="material-symbols-outlined text-[14px]">psychology_alt</span>
+                                <span>Ask AI</span>
+                            </button>
+                        </div>
+                    </div>
                 </td>
                 <td class="px-6 py-6 text-sm">
                     <div class="space-y-1" id="u-ans-${index}"></div>
                 </td>
-                <td class="px-6 py-6 text-sm">
-                    <div class="space-y-1 opacity-60" id="c-ans-${index}"></div>
-                </td>
-                <td class="px-8 py-6 text-right">
-                    <span class="inline-flex px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest" id="status-${index}"></span>
+                <td class="px-8 py-6 text-sm text-right">
+                    <div class="space-y-1 opacity-60 inline-block text-left" id="c-ans-${index}"></div>
                 </td>
             `;
 
@@ -640,10 +644,6 @@ Please explain clearly and concisely why this option is correct or incorrect bas
                 cAnsContainer.appendChild(p);
             });
 
-            const statusLabel = row.querySelector(`#status-${index}`);
-            statusLabel.className += ` ${isCorrect ? 'bg-success/10 text-success' : 'bg-error/10 text-error'}`;
-            statusLabel.textContent = correct_or_incorrect[index];
-
             const btn = row.querySelector('.copy-ai-btn');
             btn.onclick = () => {
                 const domainCtx = currentQAll.domains && currentQAll.domains.length ? `\nDomain: ${currentQAll.domains.join(', ')}` : '';
@@ -658,7 +658,7 @@ Please explain clearly and concisely why this option is correct or incorrect bas
                     expertiseInstruction = "Act as a professional industry expert. Use precise technical terminology and be extremely concise and efficient in your explanation.";
                 }
 
-                const prompt = `${expertiseInstruction}${domainCtx}${tagsCtx}\nQuestion: ${question}\n\nOptions:\n${currentQAll.options.map(o => '- ' + o.option_text).join('\n')}\n\nMy Selected Answer: ${currentSelectedAnswersAll[index].join(', ') || 'None'}\nCorrect Answer: ${currentCorrectAnsArrAll[index].join(', ')}\n\nPlease explain clearly and concisely why this is the correct answer based on core concepts and best practices.`;
+                const prompt = `${expertiseInstruction}${domainCtx}${tagsCtx}\nQuestion: ${question}\n\nOptions:\n${currentQAll.options.map(o => '- ' + o.option_text).join('\n')}\n\nMy Selected Answer: ${currentSelectedAnswersAll[index].join(', ') || 'None'}\nCorrect Answer: ${currentCorrectAnsArrAll[index].join(', ')}\n\nPlease explain clearly and concisely why this is the correct answer based on core concepts and best practices. Do NOT provide follow-up questions, suggested topics, or further conversation hooks. Provide only the explanation content.`;
 
                 navigator.clipboard.writeText(prompt).then(() => {
                     const span = btn.querySelector('span:last-child');
