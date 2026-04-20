@@ -316,3 +316,71 @@ function renderQuizShortcuts() {
         });
     });
 }
+function getReviewStats() {
+    return new Promise((resolve, reject) => {
+        if (!db) return resolve(0);
+        const transaction = db.transaction(['progress'], 'readonly');
+        const store = transaction.objectStore('progress');
+        const request = store.getAll();
+        request.onsuccess = () => {
+            const now = new Date();
+            const weak = request.result.filter(p => {
+                const isOverdue = p.nextReview ? new Date(p.nextReview) <= now : true;
+                const isUnstable = p.repetitions < 3;
+                return isOverdue || isUnstable;
+            });
+            resolve(weak.length);
+        };
+        request.onerror = (e) => reject(e.target.error);
+    });
+}
+
+function getReviewQuestions() {
+    return new Promise((resolve, reject) => {
+        if (!db) return resolve([]);
+        const transaction = db.transaction(['progress', 'questions'], 'readonly');
+        const pStore = transaction.objectStore('progress');
+        const qStore = transaction.objectStore('questions');
+        
+        const pRequest = pStore.getAll();
+        pRequest.onsuccess = () => {
+            const progress = pRequest.result;
+            const now = new Date();
+            
+            // Filter and shuffle
+            const weakProgress = progress
+                .filter(p => (p.repetitions < 3) || (p.nextReview && new Date(p.nextReview) <= now))
+                .sort(() => 0.5 - Math.random())
+                .slice(0, 20);
+
+            if (weakProgress.length === 0) return resolve([]);
+
+            const qIds = weakProgress.map(p => p.question_id);
+            const questions = [];
+            let loadedCount = 0;
+
+            qIds.forEach(id => {
+                const qRequest = qStore.get(id);
+                qRequest.onsuccess = () => {
+                    if (qRequest.result) {
+                        const pData = weakProgress.find(p => p.question_id === id);
+                        questions.push({
+                            ...qRequest.result,
+                            feynman_explanation: pData ? pData.feynman_explanation : null,
+                            sm2: pData
+                        });
+                    }
+                    loadedCount++;
+                    if (loadedCount === qIds.length) {
+                        resolve(questions);
+                    }
+                };
+                qRequest.onerror = (e) => {
+                    loadedCount++;
+                    if (loadedCount === qIds.length) resolve(questions);
+                };
+            });
+        };
+        pRequest.onerror = (e) => reject(e.target.error);
+    });
+}
