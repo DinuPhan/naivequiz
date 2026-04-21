@@ -308,7 +308,9 @@ async function checkAndLoadInitialData() {
                     const manifest = await manifestRes.json();
                     let totalImported = 0;
 
-                    for (const filePath of manifest) {
+                    const modulesToLoad = manifest.modules || manifest;
+
+                    for (const filePath of modulesToLoad) {
                         try {
                             const mdRes = await fetch(filePath);
                             if (!mdRes.ok) continue;
@@ -443,7 +445,7 @@ function fuzzySearch(quizzes, query) {
     });
 }
 
-export function renderNavbar(filterQuery = '') {
+function renderNavbar(filterQuery = '') {
     const navList = document.getElementById('dynamic-nav-list');
     if (!navList) return Promise.resolve();
 

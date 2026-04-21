@@ -1,13 +1,21 @@
-[
-  "questions-bank/AWS/CLF-C02/Mock_Exam.md",
-  "questions-bank/AWS/CLF-C02/Module_1_Cloud_Concepts_Overview.md",
-  "questions-bank/AWS/CLF-C02/Module_2_Cloud_Economics_and_Billing.md",
-  "questions-bank/AWS/CLF-C02/Module_3_AWS_Global_Infrastructure_Overview.md",
-  "questions-bank/AWS/CLF-C02/Module_4_AWS_Cloud_Security.md",
-  "questions-bank/AWS/CLF-C02/Module_5_Networking_and_Content_Delivery.md",
-  "questions-bank/AWS/CLF-C02/Module_6_Compute.md",
-  "questions-bank/AWS/CLF-C02/Module_7_Storage.md",
-  "questions-bank/AWS/CLF-C02/Module_8_Databases.md",
-  "questions-bank/AWS/CLF-C02/Module_9_Cloud_Architecture.md",
-  "questions-bank/AWS/CLF-C02/Module_10_Automatic_Scaling_and_Monitoring.md"
-]
+{
+  "name": "Naive Quiz",
+  "short_name": "NaiveQuiz",
+  "start_url": "index.html",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#436700",
+  "modules": [
+    "questions-bank/AWS/CLF-C02/Mock_Exam.md",
+    "questions-bank/AWS/CLF-C02/Module_1_Cloud_Concepts_Overview.md",
+    "questions-bank/AWS/CLF-C02/Module_2_Cloud_Economics_and_Billing.md",
+    "questions-bank/AWS/CLF-C02/Module_3_AWS_Global_Infrastructure_Overview.md",
+    "questions-bank/AWS/CLF-C02/Module_4_AWS_Cloud_Security.md",
+    "questions-bank/AWS/CLF-C02/Module_5_Networking_and_Content_Delivery.md",
+    "questions-bank/AWS/CLF-C02/Module_6_Compute.md",
+    "questions-bank/AWS/CLF-C02/Module_7_Storage.md",
+    "questions-bank/AWS/CLF-C02/Module_8_Databases.md",
+    "questions-bank/AWS/CLF-C02/Module_9_Cloud_Architecture.md",
+    "questions-bank/AWS/CLF-C02/Module_10_Automatic_Scaling_and_Monitoring.md"
+  ]
+}
