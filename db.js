@@ -428,19 +428,54 @@ function getRecentQuizIds() {
     });
 }
 
-function renderNavbar() {
+function fuzzyMatch(query, text) {
+    if (!query) return true;
+    const tokens = query.toLowerCase().split(/\s+/).filter(t => t.length > 0);
+    const target = text.toLowerCase();
+    return tokens.every(token => target.includes(token));
+}
+
+function fuzzySearch(quizzes, query) {
+    if (!query) return quizzes;
+    return quizzes.filter(quiz => {
+        const searchableText = `${quiz.title} ${quiz.id} ${quiz.tags ? quiz.tags.join(' ') : ''}`;
+        return fuzzyMatch(query, searchableText);
+    });
+}
+
+function renderNavbar(filterQuery = '') {
     const navList = document.getElementById('dynamic-nav-list');
     if (!navList) return Promise.resolve();
 
     return getQuizzes().then(quizzes => {
         // Clear skeleton loaders or existing items
         navList.innerHTML = '';
+        
+        const filteredQuizzes = fuzzySearch(quizzes, filterQuery);
+
+        // Header
         const header = document.createElement('div');
         header.className = "px-2 py-3 text-xs uppercase tracking-widest font-bold opacity-40";
-        header.textContent = "Available Modules";
+        header.textContent = filterQuery ? "Search Results" : "Available Modules";
         navList.appendChild(header);
+
+        if (filteredQuizzes.length === 0) {
+            const emptyState = document.createElement('div');
+            emptyState.className = "flex flex-col items-center justify-center py-12 px-4 text-center space-y-3 animate-in fade-in duration-500";
+            emptyState.innerHTML = `
+                <div class="w-12 h-12 rounded-2xl bg-surface-container-highest flex items-center justify-center text-on-surface-variant/20">
+                    <span class="material-symbols-outlined text-3xl">search_off</span>
+                </div>
+                <div class="space-y-1">
+                    <p class="text-sm font-bold text-inverse-surface">No modules found</p>
+                    <p class="text-[11px] text-on-surface-variant/40 leading-tight">Try different keywords or check for typos.</p>
+                </div>
+            `;
+            navList.appendChild(emptyState);
+            return;
+        }
         
-        quizzes.forEach(quiz => {
+        filteredQuizzes.forEach(quiz => {
             const a = document.createElement('a');
             const urlParams = new URLSearchParams(window.location.search);
             const rawActiveId = urlParams.get('id');

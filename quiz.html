@@ -144,6 +144,16 @@
             </div>
 
             <!-- Quiz Modules List -->
+            <div class="px-4 mb-4">
+                <div class="relative group">
+                    <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant/40 text-lg group-focus-within:text-primary transition-colors">search</span>
+                    <input type="text" id="sidebar-search" placeholder="Search modules..." 
+                           class="w-full pl-10 pr-10 py-2 bg-surface-container-highest/50 border-none rounded-xl text-sm focus:ring-2 focus:ring-primary/20 transition-all placeholder:text-on-surface-variant/30">
+                    <button id="clear-search" class="absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant/40 hover:text-primary hidden">
+                        <span class="material-symbols-outlined text-lg">close</span>
+                    </button>
+                </div>
+            </div>
             <div class="flex-1 overflow-y-auto px-4 py-6 space-y-2" id="dynamic-nav-list">
                 <div class="px-2 py-3 text-xs uppercase tracking-widest font-bold opacity-40">Available Modules</div>
                 <!-- Populated by db.js -->
@@ -421,13 +431,41 @@
 
         loadSidebarState();
 
-        const mainTitle = document.getElementById('quiz-title');
-        const observer = new MutationObserver(() => {
-            document.getElementById('quiz-title-header').innerText = mainTitle.innerText;
-        });
         if (mainTitle) {
             observer.observe(mainTitle, { childList: true });
         }
+
+        // Sidebar Search Logic
+        const searchInput = document.getElementById('sidebar-search');
+        const clearBtn = document.getElementById('clear-search');
+
+        function debounce(func, timeout = 300) {
+            let timer;
+            return (...args) => {
+                clearTimeout(timer);
+                timer = setTimeout(() => { func.apply(this, args); }, timeout);
+            };
+        }
+
+        const handleSearch = debounce((e) => {
+            const query = e.target.value;
+            renderNavbar(query);
+            
+            if (query.trim()) {
+                clearBtn.classList.remove('hidden');
+            } else {
+                clearBtn.classList.add('hidden');
+            }
+        }, 150);
+
+        searchInput?.addEventListener('input', handleSearch);
+
+        clearBtn?.addEventListener('click', () => {
+            searchInput.value = '';
+            clearBtn.classList.add('hidden');
+            renderNavbar('');
+            searchInput.focus();
+        });
     </script>
 </body>
 

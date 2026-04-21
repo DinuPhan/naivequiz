@@ -4,7 +4,8 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://cdn.jsdelivr.net https://cdn.jsdelivr.net/npm/marked/marked.min.js https://cdn.jsdelivr.net/npm/dompurify/dist/purify.min.js https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.tailwindcss.com https://cdn.jsdelivr.net; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' https://cdn.jsdelivr.net;">
+    <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://cdn.jsdelivr.net https://cdn.jsdelivr.net/npm/marked/marked.min.js https://cdn.jsdelivr.net/npm/dompurify/dist/purify.min.js https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.tailwindcss.com https://cdn.jsdelivr.net; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' https://cdn.jsdelivr.net;">
     <title>Naive Quiz - Prepare for Any Certificate Interactively</title>
     <meta name="theme-color" content="#ffffff">
     <link rel="manifest" href="manifest.json">
@@ -15,9 +16,10 @@
         rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1"
         rel="stylesheet">
-    
+
     <!-- Markdown & Highlighting Libraries -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github-dark.min.css">
+    <link rel="stylesheet"
+        href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github-dark.min.css">
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/dompurify/dist/purify.min.js"></script>
     <script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js"></script>
@@ -173,6 +175,16 @@
             </div>
 
             <!-- Quiz Modules List -->
+            <div class="px-4 mb-4">
+                <div class="relative group">
+                    <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant/40 text-lg group-focus-within:text-primary transition-colors">search</span>
+                    <input type="text" id="sidebar-search" placeholder="Search modules..." 
+                           class="w-full pl-10 pr-10 py-2 bg-surface-container-highest/50 border-none rounded-xl text-sm focus:ring-2 focus:ring-primary/20 transition-all placeholder:text-on-surface-variant/30">
+                    <button id="clear-search" class="absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant/40 hover:text-primary hidden">
+                        <span class="material-symbols-outlined text-lg">close</span>
+                    </button>
+                </div>
+            </div>
             <div class="flex-1 overflow-y-auto px-4 py-6 space-y-2" id="dynamic-nav-list">
                 <div class="px-2 py-3 text-xs uppercase tracking-widest font-bold opacity-40">Available Modules</div>
                 <!-- Populated by db.js -->
@@ -190,10 +202,13 @@
                     class="p-2 hover:bg-surface-container-highest rounded-full text-on-surface-variant transition-colors group">
                     <span class="material-symbols-outlined group-hover:scale-110 transition-transform">menu</span>
                 </button>
-                <div
-                    class="flex items-center space-x-2 bg-primary-container/30 px-3 py-1 rounded-full border border-primary/20 transition-colors duration-300" id="mode-badge">
-                    <span id="mode-dot" class="w-2 h-2 rounded-full bg-primary animate-pulse w-max transition-colors duration-300"></span>
-                    <span id="mode-text" class="text-xs uppercase tracking-widest font-bold text-primary transition-colors duration-300">Naive mode: OFF</span>
+                <div class="flex items-center space-x-2 bg-primary-container/30 px-3 py-1 rounded-full border border-primary/20 transition-colors duration-300"
+                    id="mode-badge">
+                    <span id="mode-dot"
+                        class="w-2 h-2 rounded-full bg-primary animate-pulse w-max transition-colors duration-300"></span>
+                    <span id="mode-text"
+                        class="text-xs uppercase tracking-widest font-bold text-primary transition-colors duration-300">Naive
+                        mode: OFF</span>
                 </div>
             </div>
         </header>
@@ -230,7 +245,8 @@
                         class="p-6 bg-surface-container-highest rounded-3xl flex flex-col items-center space-y-2 border border-black/5">
                         <span class="material-symbols-outlined text-primary text-3xl">quiz</span>
                         <span class="text-2xl font-bold">383+</span>
-                        <span class="text-xs uppercase tracking-widest font-medium opacity-60">Curated Questions</span>
+                        <span class="text-xs uppercase tracking-widest font-medium opacity-60">Curated AWS
+                            Questions</span>
                     </div>
                     <div
                         class="p-6 bg-surface-container-highest rounded-3xl flex flex-col items-center space-y-2 border border-black/5">
@@ -287,37 +303,40 @@
 
                                 <div id="prompt-template"
                                     class="text-xs font-mono text-left leading-relaxed opacity-80 h-32 overflow-y-auto scrollbar-hide pr-2 select-all">
-                                    Act as an Expert Content Architect. Generate a high-quality quiz based on the provided material.
-                                    
-Format: Markdown Checklist Style (Extremely Robust)
-- Use YAML Frontmatter for metadata (title, tags, domains). No ID field needed.
-- Questions start with '#' (H1 heading).
-- Options use '- [ ]' for incorrect and '- [x]' for correct.
-- Explanations use '>' (Blockquotes) immediately after the options.
-- You CAN use code blocks (js etc), bold (**text**), and lists within questions/explanations.
+                                    Act as an Expert Content Architect. Generate a high-quality quiz based on the
+                                    provided material.
 
-Constraints (CRITICAL):
-- Do NOT include any "Suggested topics", "Follow-up questions", "Explorations", or additional study guide text.
-- The output MUST terminate immediately after the last explanation blockquote.
-- Ensure only valid quiz content is returned.
+                                    Format: Markdown Checklist Style (Extremely Robust)
+                                    - Use YAML Frontmatter for metadata (title, tags, domains). No ID field needed.
+                                    - Questions start with '#' (H1 heading).
+                                    - Options use '- [ ]' for incorrect and '- [x]' for correct.
+                                    - Explanations use '>' (Blockquotes) immediately after the options.
+                                    - You CAN use code blocks (js etc), bold (**text**), and lists within
+                                    questions/explanations.
 
-Example Output:
----
-title: Advanced Cloud Architecture
-tags: [AWS, Scaling, Security]
-domains: [Architecture]
----
+                                    Constraints (CRITICAL):
+                                    - Do NOT include any "Suggested topics", "Follow-up questions", "Explorations", or
+                                    additional study guide text.
+                                    - The output MUST terminate immediately after the last explanation blockquote.
+                                    - Ensure only valid quiz content is returned.
 
-# Which service provides the highest durability for static assets?
+                                    Example Output:
+                                    ---
+                                    title: Advanced Cloud Architecture
+                                    tags: [AWS, Scaling, Security]
+                                    domains: [Architecture]
+                                    ---
 
-- [ ] Amazon EBS
-- [x] Amazon S3
-- [ ] Amazon EFS
-- [ ] AWS Snowball
+                                    # Which service provides the highest durability for static assets?
 
-> Amazon S3 is designed for 99.999999999% (11 9's) of durability.
+                                    - [ ] Amazon EBS
+                                    - [x] Amazon S3
+                                    - [ ] Amazon EFS
+                                    - [ ] AWS Snowball
 
-[Insert Source Content Here]
+                                    > Amazon S3 is designed for 99.999999999% (11 9's) of durability.
+
+                                    [Insert Source Content Here]
                                 </div>
 
                                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -585,13 +604,13 @@ Format Constraints (CRITICAL):
         const modeBadge = document.getElementById('mode-badge');
         const modeDot = document.getElementById('mode-dot');
         const modeText = document.getElementById('mode-text');
-        
+
         let isModeOn = false;
 
         if (heroLogo) {
             heroLogo.onclick = () => {
                 isModeOn = !isModeOn;
-                
+
                 if (isModeOn) {
                     heroLogo.src = 'img/logo_on.png';
                     modeText.innerText = 'Naive mode: ON';
@@ -609,6 +628,38 @@ Format Constraints (CRITICAL):
                 }
             };
         }
+
+        // Sidebar Search Logic
+        const searchInput = document.getElementById('sidebar-search');
+        const clearBtn = document.getElementById('clear-search');
+
+        function debounce(func, timeout = 300) {
+            let timer;
+            return (...args) => {
+                clearTimeout(timer);
+                timer = setTimeout(() => { func.apply(this, args); }, timeout);
+            };
+        }
+
+        const handleSearch = debounce((e) => {
+            const query = e.target.value;
+            renderNavbar(query);
+            
+            if (query.trim()) {
+                clearBtn.classList.remove('hidden');
+            } else {
+                clearBtn.classList.add('hidden');
+            }
+        }, 150);
+
+        searchInput?.addEventListener('input', handleSearch);
+
+        clearBtn?.addEventListener('click', () => {
+            searchInput.value = '';
+            clearBtn.classList.add('hidden');
+            renderNavbar('');
+            searchInput.focus();
+        });
     </script>
 </body>
 
