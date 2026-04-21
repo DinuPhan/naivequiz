@@ -443,7 +443,7 @@ function fuzzySearch(quizzes, query) {
     });
 }
 
-function renderNavbar(filterQuery = '') {
+export function renderNavbar(filterQuery = '') {
     const navList = document.getElementById('dynamic-nav-list');
     if (!navList) return Promise.resolve();
 
@@ -682,6 +682,6 @@ function getReviewQuestions() {
                 };
             });
         };
-        pRequest.onerror = (e) => reject(e.target.error);
+        pRequest.onerror = (e) => reject(pRequest.error);
     });
 }

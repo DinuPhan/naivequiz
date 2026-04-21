@@ -5,6 +5,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const quizApp = document.getElementById('quiz-app');
     const introSection = document.getElementById('intro-section');
     const resultDiv = document.getElementById('result');
+    const PROGRESS_KEY = 'naivequiz_progress';
+    const ACCOLADES = [
+        "Brilliant!", "Keep it up!", "Spot on!", "Unstoppable!", 
+        "You've got this!", "Sharp eye!", "Pure focus!", "On fire! 🔥",
+        "Genius!", "Keep climbing!", "Solid progress!", "Excellent! ✨",
+        "Well played!", "Mastery in motion!", "Simply great!", "Outstanding!"
+    ];
     const nextBtn = document.getElementById('next-btn');
     const viewResultsBtn = document.getElementById('view-results-btn');
     const detailsSection = document.getElementById('details');
@@ -492,6 +499,12 @@ Please explain clearly and concisely why this option is correct or incorrect bas
                     loadNextQuestion();
                 };
             } else if (!isWrong && userSettings.showAnswers) {
+                // Celebration!
+                const randomAccolade = ACCOLADES[Math.floor(Math.random() * ACCOLADES.length)];
+                resultDiv.innerText = randomAccolade;
+                resultDiv.classList.add('animate-congrats');
+                triggerCelebration(selectedBtn);
+
                 if (currentQuizId !== 'fun') {
                     getProgress(qId).then(prevData => {
                         const newData = calculateSM2(4, prevData);
@@ -502,7 +515,7 @@ Please explain clearly and concisely why this option is correct or incorrect bas
                         if (typeof saveProgress === 'function') saveProgress(qId, newData);
                     });
                 }
-                loadNextQuestion();
+                setTimeout(loadNextQuestion, 1200);
             } else {
                 // If answers are hidden, still save SM-2 but stay silent
                 if (currentQuizId !== 'fun') {
@@ -533,11 +546,12 @@ Please explain clearly and concisely why this option is correct or incorrect bas
 
     function resetState() {
         nextBtn.classList.add('hidden');
-        resultDiv.innerText = "";
-        resultDiv.className = "";
         while (answerButtons.firstChild) {
             answerButtons.removeChild(answerButtons.firstChild);
         }
+        resultDiv.innerText = "";
+        resultDiv.className = "text-center font-bold text-lg text-success h-6";
+        resultDiv.classList.remove('animate-congrats');
         twoanswers = false;
         threeanswers = false;
         selectedAnswers = [];
