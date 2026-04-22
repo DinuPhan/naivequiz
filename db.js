@@ -1,17 +1,27 @@
 // aws-quiz/db.js
 const DB_NAME = 'QuizPlatformDB';
-const DB_VERSION = 2;
+const DB_VERSION = 3;
 
-let db;
+let dbPromise = null;
+
+function getDB() {
+    if (!dbPromise) {
+        dbPromise = initDB();
+    }
+    return dbPromise;
+}
 
 function initDB() {
     return new Promise((resolve, reject) => {
         const request = indexedDB.open(DB_NAME, DB_VERSION);
 
-        request.onerror = (event) => reject("IndexedDB error: " + event.target.error);
+        request.onerror = (event) => {
+            console.error("IndexedDB error:", event.target.error);
+            reject(event.target.error);
+        };
 
         request.onsuccess = (event) => {
-            db = event.target.result;
+            const db = event.target.result;
             resolve(db);
         };
 
@@ -42,7 +52,8 @@ function initDB() {
     });
 }
 
-function saveSettings(settings) {
+async function saveSettings(settings) {
+    const db = await getDB();
     return new Promise((resolve, reject) => {
         const transaction = db.transaction(['settings'], 'readwrite');
         const store = transaction.objectStore('settings');
@@ -53,7 +64,8 @@ function saveSettings(settings) {
     });
 }
 
-function getSettings() {
+async function getSettings() {
+    const db = await getDB();
     return new Promise((resolve, reject) => {
         const transaction = db.transaction(['settings'], 'readonly');
         const store = transaction.objectStore('settings');
@@ -126,6 +138,7 @@ async function importQuizData(jsonData) {
         }
     }
 
+    const db = await getDB();
     return new Promise((resolve, reject) => {
         const transaction = db.transaction(['questions', 'quizzes'], 'readwrite');
         const qStore = transaction.objectStore('questions');
@@ -292,55 +305,60 @@ function parseMarkdownQuiz(mdText) {
     return result;
 }
 
-async function checkAndLoadInitialData() {
-    return new Promise((resolve, reject) => {
-        const transaction = db.transaction(['questions'], 'readonly');
-        const store = transaction.objectStore('questions');
-        const request = store.count();
-
-        request.onsuccess = async () => {
-            if (request.result === 0) {
-                console.log('DB empty. Loading default modules from manifest...');
-                try {
-                    const manifestRes = await fetch('manifest.json');
-                    if (!manifestRes.ok) throw new Error('Could not find manifest.json');
-                    
-                    const manifest = await manifestRes.json();
-                    let totalImported = 0;
-
-                    const modulesToLoad = manifest.modules || manifest;
-
-                    for (const filePath of modulesToLoad) {
-                        try {
-                            const mdRes = await fetch(filePath);
-                            if (!mdRes.ok) continue;
-                            const mdText = await mdRes.text();
-                            const data = parseMarkdownQuiz(mdText);
-                            const count = await importQuizData(data);
-                            totalImported += count;
-                            
-                            const fileName = filePath.split('/').pop();
-                            console.log(`- Imported ${fileName} (${count} questions)`);
-                        } catch (fileErr) {
-                            console.error(`Failed to load default module ${filePath}:`, fileErr);
-                        }
-                    }
-
-                    console.log(`Initial load complete. Total questions: ${totalImported}`);
-                    resolve();
-                } catch (err) {
-                    console.error('Initial data load failed:', err);
-                    reject(err);
-                }
-            } else {
-                resolve(); // Data already exists
-            }
-        };
-        request.onerror = (e) => reject(e.target.error);
-    });
+async function loadManifestModule(filePath) {
+    try {
+        const mdRes = await fetch(filePath);
+        if (!mdRes.ok) return 0;
+        const mdText = await mdRes.text();
+        const data = parseMarkdownQuiz(mdText);
+        return await importQuizData(data);
+    } catch (fileErr) {
+        console.error(`Failed to load module ${filePath}:`, fileErr);
+        return 0;
+    }
 }
 
-function saveProgress(questionId, sm2Data) {
+async function checkAndLoadInitialData() {
+    try {
+        const db = await getDB();
+        const manifestRes = await fetch('manifest.json');
+        if (!manifestRes.ok) throw new Error('Could not find manifest.json');
+        
+        const manifest = await manifestRes.json();
+        const modulesToLoad = manifest.modules || manifest;
+        let totalNewQuestions = 0;
+
+        for (const filePath of modulesToLoad) {
+            // derive a potential ID to check (simplified)
+            const fileName = filePath.split('/').pop().replace('.md', '');
+            
+            const exists = await new Promise((resolve) => {
+                const tx = db.transaction(['quizzes'], 'readonly');
+                const store = tx.objectStore('quizzes');
+                const req = store.get(fileName);
+                req.onsuccess = () => resolve(!!req.result);
+                req.onerror = () => resolve(false);
+            });
+
+            if (!exists) {
+                const count = await loadManifestModule(filePath);
+                if (count > 0) {
+                    totalNewQuestions += count;
+                    console.log(`- Loaded missing manifest module: ${fileName} (${count} questions)`);
+                }
+            }
+        }
+
+        if (totalNewQuestions > 0) {
+            console.log(`Pre-population complete. Added ${totalNewQuestions} new questions.`);
+        }
+    } catch (err) {
+        console.error('Initial data check/load failed:', err);
+    }
+}
+
+async function saveProgress(questionId, sm2Data) {
+    const db = await getDB();
     return new Promise((resolve, reject) => {
         const transaction = db.transaction(['progress'], 'readwrite');
         const store = transaction.objectStore('progress');
@@ -357,7 +375,8 @@ function saveProgress(questionId, sm2Data) {
     });
 }
 
-function getProgress(questionId) {
+async function getProgress(questionId) {
+    const db = await getDB();
     return new Promise((resolve, reject) => {
         const transaction = db.transaction(['progress'], 'readonly');
         const store = transaction.objectStore('progress');
@@ -368,7 +387,8 @@ function getProgress(questionId) {
     });
 }
 
-function getQuizzes() {
+async function getQuizzes() {
+    const db = await getDB();
     return new Promise((resolve, reject) => {
         const transaction = db.transaction(['questions'], 'readonly');
         const store = transaction.objectStore('questions');
@@ -401,7 +421,8 @@ function getQuizzes() {
     });
 }
 
-function getRecentQuizIds() {
+async function getRecentQuizIds() {
+    const db = await getDB();
     return new Promise((resolve, reject) => {
         const transaction = db.transaction(['progress'], 'readonly');
         const store = transaction.objectStore('progress');
@@ -619,9 +640,9 @@ function renderQuizShortcuts() {
         });
     });
 }
-function getReviewStats() {
+async function getReviewStats() {
+    const db = await getDB();
     return new Promise((resolve, reject) => {
-        if (!db) return resolve(0);
         const transaction = db.transaction(['progress'], 'readonly');
         const store = transaction.objectStore('progress');
         const request = store.getAll();
@@ -638,9 +659,9 @@ function getReviewStats() {
     });
 }
 
-function getReviewQuestions() {
+async function getReviewQuestions() {
+    const db = await getDB();
     return new Promise((resolve, reject) => {
-        if (!db) return resolve([]);
         const transaction = db.transaction(['progress', 'questions'], 'readonly');
         const pStore = transaction.objectStore('progress');
         const qStore = transaction.objectStore('questions');
