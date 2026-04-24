@@ -192,7 +192,7 @@ function parseMarkdownQuiz(mdText) {
     };
 
     let currentQuiz = {
-        quiz_id: Date.now().toString(),
+        quiz_id: null,
         title: "Imported Markdown Quiz",
         tags: [],
         quiz_type: 'markdown',
@@ -229,7 +229,8 @@ function parseMarkdownQuiz(mdText) {
 
                 // IMPLICIT ID GENERATION
                 if (!currentQuiz.quiz_id && currentQuiz.title) {
-                    currentQuiz.quiz_id = slugify(currentQuiz.title);
+                    const domainPrefix = result.domains && result.domains.length > 0 ? result.domains[0] + '-' : '';
+                    currentQuiz.quiz_id = slugify(domainPrefix + currentQuiz.title);
                 } else if (!currentQuiz.quiz_id) {
                     currentQuiz.quiz_id = 'quiz-' + Date.now();
                 }
@@ -328,24 +329,59 @@ async function checkAndLoadInitialData() {
         const modulesToLoad = manifest.modules || manifest;
         let totalNewQuestions = 0;
 
-        for (const filePath of modulesToLoad) {
-            // derive a potential ID to check (simplified)
-            const fileName = filePath.split('/').pop().replace('.md', '');
-            
-            const exists = await new Promise((resolve) => {
-                const tx = db.transaction(['quizzes'], 'readonly');
-                const store = tx.objectStore('quizzes');
-                const req = store.get(fileName);
-                req.onsuccess = () => resolve(!!req.result);
-                req.onerror = () => resolve(false);
-            });
+        // Cleanup buggy duplicates created by previous bug
+        await new Promise((resolve) => {
+            const tx = db.transaction(['quizzes', 'questions'], 'readwrite');
+            const quizzesStore = tx.objectStore('quizzes');
+            const questionsStore = tx.objectStore('questions');
 
-            if (!exists) {
-                const count = await loadManifestModule(filePath);
-                if (count > 0) {
-                    totalNewQuestions += count;
-                    console.log(`- Loaded missing manifest module: ${fileName} (${count} questions)`);
-                }
+            let pending = 2;
+            const checkDone = () => { pending--; if(pending === 0) resolve(); };
+
+            const qReq = quizzesStore.getAll();
+            qReq.onsuccess = () => {
+                qReq.result.forEach(q => {
+                    if (/^\d{13}$/.test(q.quiz_id)) quizzesStore.delete(q.quiz_id);
+                });
+                checkDone();
+            };
+            
+            const qstReq = questionsStore.getAll();
+            qstReq.onsuccess = () => {
+                qstReq.result.forEach(q => {
+                    if (/^\d{13}$/.test(q.quiz_id)) questionsStore.delete(q.id);
+                });
+                checkDone();
+            };
+        });
+
+        const existingQuizzes = await new Promise((resolve) => {
+            const tx = db.transaction(['quizzes'], 'readonly');
+            const store = tx.objectStore('quizzes');
+            const req = store.getAll();
+            req.onsuccess = () => resolve(req.result || []);
+            req.onerror = () => resolve([]);
+        });
+
+        const existingIds = existingQuizzes.map(q => q.quiz_id);
+
+        for (const filePath of modulesToLoad) {
+            const parts = filePath.split('/');
+            const domain = parts.length > 2 ? parts[1] : '';
+            const fileName = parts.pop().replace('.md', '');
+            
+            const titleEquivalent = fileName.replace(/_/g, ' ');
+            const predictedId = slugify((domain ? domain + '-' : '') + titleEquivalent);
+            const predictedIdWithoutDomain = slugify(titleEquivalent);
+
+            if (existingIds.includes(predictedId) || existingIds.includes(predictedIdWithoutDomain)) {
+                continue;
+            }
+
+            const count = await loadManifestModule(filePath);
+            if (count > 0) {
+                totalNewQuestions += count;
+                console.log(`- Loaded missing manifest module: ${fileName} (${count} questions)`);
             }
         }
 
@@ -390,34 +426,43 @@ async function getProgress(questionId) {
 async function getQuizzes() {
     const db = await getDB();
     return new Promise((resolve, reject) => {
-        const transaction = db.transaction(['questions'], 'readonly');
-        const store = transaction.objectStore('questions');
-        const request = store.getAll();
+        const transaction = db.transaction(['quizzes', 'questions'], 'readonly');
+        const quizzesStore = transaction.objectStore('quizzes');
+        const questionsStore = transaction.objectStore('questions');
+        
+        const quizMap = new Map();
 
-        request.onsuccess = () => {
-            const allQuestions = request.result;
-            const quizMap = new Map();
-            
-            allQuestions.forEach(q => {
-                const qId = q.quiz_id;
-                if (!quizMap.has(qId)) {
-                    quizMap.set(qId, q.quiz_title);
-                }
+        const req1 = quizzesStore.getAll();
+        req1.onsuccess = (e) => {
+            const quizzesData = e.target.result || [];
+            quizzesData.forEach(q => {
+                quizMap.set(q.quiz_id, { id: q.quiz_id, title: q.title, tags: q.tags });
             });
 
-            const quizzes = Array.from(quizMap.entries()).map(([id, title]) => ({ id, title }));
-            quizzes.sort((a, b) => {
-                const aIsNum = !isNaN(a.id);
-                const bIsNum = !isNaN(b.id);
-                
-                if (aIsNum && bIsNum) return parseInt(a.id) - parseInt(b.id);
-                if (aIsNum) return -1;
-                if (bIsNum) return 1;
-                return a.id.localeCompare(b.id);
-            });
-            resolve(quizzes);
+            const req2 = questionsStore.getAll();
+            req2.onsuccess = (e2) => {
+                const questions = e2.target.result || [];
+                questions.forEach(q => {
+                    if (!quizMap.has(q.quiz_id)) {
+                        quizMap.set(q.quiz_id, { id: q.quiz_id, title: q.quiz_title, tags: q.tags || [] });
+                    }
+                });
+
+                const quizzes = Array.from(quizMap.values());
+                quizzes.sort((a, b) => {
+                    const aIsNum = !isNaN(a.id);
+                    const bIsNum = !isNaN(b.id);
+                    
+                    if (aIsNum && bIsNum) return parseInt(a.id) - parseInt(b.id);
+                    if (aIsNum) return -1;
+                    if (bIsNum) return 1;
+                    return a.id.localeCompare(b.id);
+                });
+                resolve(quizzes);
+            };
+            req2.onerror = (e2) => reject(e2.target.error);
         };
-        request.onerror = (e) => reject(e.target.error);
+        req1.onerror = (e) => reject(e.target.error);
     });
 }
 
@@ -707,4 +752,105 @@ async function getReviewQuestions() {
         };
         pRequest.onerror = (e) => reject(pRequest.error);
     });
+}
+
+async function exportQuizToMarkdown(quizId) {
+    const db = await getDB();
+    
+    // Fetch quiz metadata
+    const quizMetadata = await new Promise((resolve, reject) => {
+        const tx = db.transaction(['quizzes'], 'readonly');
+        const store = tx.objectStore('quizzes');
+        const req = store.getAll();
+        req.onsuccess = () => {
+            const all = req.result;
+            const match = all.find(q => q.quiz_id == quizId);
+            resolve(match);
+        };
+        req.onerror = () => reject(req.error);
+    });
+
+    if (!quizMetadata) {
+        console.warn(`Quiz metadata not found for ID: ${quizId}. Using fallback.`);
+        quizMetadata = {
+            quiz_id: quizId,
+            title: `Quiz ${quizId}`,
+            tags: [],
+            domains: []
+        };
+    }
+
+    // Fetch all questions for this quiz
+    const questions = await new Promise((resolve, reject) => {
+        const tx = db.transaction(['questions'], 'readonly');
+        const store = tx.objectStore('questions');
+        const req = store.getAll();
+        req.onsuccess = () => {
+            const all = req.result;
+            const match = all.filter(q => q.quiz_id == quizId);
+            resolve(match);
+        };
+        req.onerror = () => reject(req.error);
+    });
+
+    // Generate Markdown
+    let md = `---\n`;
+    md += `title: ${quizMetadata.title || "Untitled Quiz"}\n`;
+    
+    if (quizMetadata.tags && quizMetadata.tags.length > 0) {
+        md += `tags: [${quizMetadata.tags.join(', ')}]\n`;
+    }
+    
+    if (quizMetadata.domains && quizMetadata.domains.length > 0) {
+        md += `domains: [${quizMetadata.domains.join(', ')}]\n`;
+    }
+    
+    md += `id: ${quizMetadata.quiz_id}\n`;
+    md += `---\n\n`;
+
+    // Sort questions by their original question_id (numeric if possible)
+    questions.sort((a, b) => {
+        const idA = parseInt(a.quesiton_id || a.question_id);
+        const idB = parseInt(b.quesiton_id || b.question_id);
+        if (!isNaN(idA) && !isNaN(idB)) return idA - idB;
+        return 0;
+    });
+
+    questions.forEach(q => {
+        md += `# ${q.question_text.trim()}\n\n`;
+        
+        q.options.forEach(opt => {
+            let isCorrect = false;
+            if (Array.isArray(q.correct_answer_id)) {
+                isCorrect = q.correct_answer_id.includes(opt.option_id);
+            } else {
+                isCorrect = String(q.correct_answer_id) === String(opt.option_id);
+            }
+            md += `- [${isCorrect ? 'x' : ' '}] ${opt.option_text}\n`;
+        });
+        
+        if (q.explanation && q.explanation.trim() !== '') {
+            md += `\n> ${q.explanation.trim().replace(/\n/g, '\n> ')}\n`;
+        }
+        md += `\n`;
+    });
+
+    return {
+        markdown: md,
+        filename: `${slugify(quizMetadata.title || quizMetadata.quiz_id)}.md`
+    };
+}
+
+function downloadMarkdown(content, filename) {
+    const blob = new Blob([content], { type: 'text/markdown' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => {
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+    }, 0);
 }

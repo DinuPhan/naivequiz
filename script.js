@@ -7,7 +7,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const resultDiv = document.getElementById('result');
     const PROGRESS_KEY = 'naivequiz_progress';
     const ACCOLADES = [
-        "Brilliant!", "Keep it up!", "Spot on!", "Unstoppable!", 
+        "Brilliant!", "Keep it up!", "Spot on!", "Unstoppable!",
         "You've got this!", "Sharp eye!", "Pure focus!", "On fire! 🔥",
         "Genius!", "Keep climbing!", "Solid progress!", "Excellent! ✨",
         "Well played!", "Mastery in motion!", "Simply great!", "Outstanding!"
@@ -37,7 +37,7 @@ document.addEventListener('DOMContentLoaded', () => {
      */
     function renderRichText(element, md) {
         if (!element || !md) return;
-        
+
         // Check if libraries are loaded (CDN might fail or be blocked by CSP if misconfigured)
         if (typeof marked === 'undefined' || typeof DOMPurify === 'undefined') {
             element.textContent = md; // Fallback to safe text
@@ -94,11 +94,43 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 if (document.getElementById('page-title')) document.getElementById('page-title').innerText = quizTitle;
                 if (document.getElementById('quiz-title')) document.getElementById('quiz-title').innerText = quizTitle;
+                if (document.getElementById('quiz-title-header')) document.getElementById('quiz-title-header').innerText = quizTitle;
                 if (document.getElementById('quiz-question-count')) document.getElementById('quiz-question-count').innerText = totalQuestions;
                 if (document.getElementById('quiz-total-marks')) document.getElementById('quiz-total-marks').innerText = totalQuestions;
                 if (document.getElementById('quiz-passing-marks')) document.getElementById('quiz-passing-marks').innerText = passingMarks;
 
                 if (introSection) introSection.classList.remove('hidden');
+
+                // Export button logic
+                const exportBtn = document.getElementById('export-module-btn');
+                if (exportBtn) {
+                    if (mode === 'fun' || mode === 'smart') {
+                        exportBtn.style.display = 'none';
+                    } else {
+                        exportBtn.style.display = 'flex';
+                        // Clean up old listeners
+                        const newExportBtn = exportBtn.cloneNode(true);
+                        exportBtn.parentNode.replaceChild(newExportBtn, exportBtn);
+
+                        newExportBtn.addEventListener('click', async () => {
+                            try {
+                                const btnSpan = newExportBtn.querySelector('span:last-child');
+                                const originalText = btnSpan.innerText;
+                                btnSpan.innerText = "Exporting...";
+
+                                const { markdown, filename } = await exportQuizToMarkdown(currentQuizId);
+                                downloadMarkdown(markdown, filename);
+
+                                btnSpan.innerText = "Done!";
+                                setTimeout(() => btnSpan.innerText = originalText, 2000);
+                            } catch (err) {
+                                console.error("Export failed:", err);
+                                alert("Failed to export module.");
+                            }
+                        });
+                    }
+                }
+
                 resolve();
             };
 
@@ -111,28 +143,30 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
-            const transaction = db.transaction(['questions'], 'readonly');
-            const store = transaction.objectStore('questions');
-            const request = store.getAll();
+            getDB().then(db => {
+                const transaction = db.transaction(['questions'], 'readonly');
+                const store = transaction.objectStore('questions');
+                const request = store.getAll();
 
-            request.onsuccess = () => {
-                const allData = request.result;
-                let quizTitle = "";
+                request.onsuccess = () => {
+                    const allData = request.result;
+                    let quizTitle = "";
 
-                if (mode === 'fun') {
-                    const shuffled = [...allData].sort(() => 0.5 - Math.random());
-                    questions = shuffled.slice(0, 10);
-                    currentQuizId = 'fun';
-                    quizTitle = "Fun Mode (Random 10)";
-                } else {
-                    questions = allData.filter(q => q.quiz_id == targetQuizId);
-                    currentQuizId = targetQuizId;
-                    quizTitle = questions.length > 0 ? (questions[0].quiz_title || "Quiz " + targetQuizId) : "Quiz " + targetQuizId;
-                }
+                    if (mode === 'fun') {
+                        const shuffled = [...allData].sort(() => 0.5 - Math.random());
+                        questions = shuffled.slice(0, 10);
+                        currentQuizId = 'fun';
+                        quizTitle = "Fun Mode (Random 10)";
+                    } else {
+                        questions = allData.filter(q => q.quiz_id == targetQuizId);
+                        currentQuizId = targetQuizId;
+                        quizTitle = questions.length > 0 ? (questions[0].quiz_title || "Quiz " + targetQuizId) : "Quiz " + targetQuizId;
+                    }
 
-                finalizeLoad(quizTitle);
-            };
-            request.onerror = (e) => reject(e.target.error);
+                    finalizeLoad(quizTitle);
+                };
+                request.onerror = (e) => reject(e.target.error);
+            }).catch(reject);
         });
     }
 
@@ -163,7 +197,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 syncSettingsUI();
             });
         }
-        
+
         const toggleBtn = document.getElementById('show-answers-toggle');
         if (toggleBtn) {
             toggleBtn.addEventListener('click', () => {
@@ -191,7 +225,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const bg = document.getElementById('show-answers-bg');
         const dot = document.getElementById('show-answers-dot');
         const label = document.getElementById('show-answers-label');
-        
+
         if (userSettings.showAnswers) {
             if (bg) bg.classList.replace('bg-surface-container-highest', 'bg-primary');
             if (dot) dot.classList.replace('translate-x-0', 'translate-x-4');
@@ -338,7 +372,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         selectedAnswers.push(selectedBtn);
-        
+
         // Show selection feedback even if showAnswers is false
         if (!userSettings.showAnswers) {
             selectedBtn.classList.replace('border-surface-container-highest', 'border-primary/40');
@@ -359,10 +393,10 @@ document.addEventListener('DOMContentLoaded', () => {
             Array.from(answerButtons.children).forEach(button => {
                 button.disabled = true;
                 // Reveal correct answers if not already selected
-                    if (button.dataset.correct === "true" && !button.classList.contains('border-success') && userSettings.showAnswers) {
-                        button.classList.replace('border-surface-container-highest', 'border-success/40');
-                        button.children[0].classList.replace('bg-surface-container-highest', 'bg-success/40');
-                    }
+                if (button.dataset.correct === "true" && !button.classList.contains('border-success') && userSettings.showAnswers) {
+                    button.classList.replace('border-surface-container-highest', 'border-success/40');
+                    button.children[0].classList.replace('bg-surface-container-highest', 'bg-success/40');
+                }
 
                 // Add AI Shortcut button
                 const optionText = button.children[1].innerText;
@@ -631,7 +665,7 @@ Please explain clearly and concisely why this option is correct or incorrect bas
 
             const qTextElement = row.querySelector(`#q-text-${index}`);
             renderRichText(qTextElement, `${index + 1}. ${question}`);
-            
+
             const uAnsContainer = row.querySelector(`#u-ans-${index}`);
             currentSelectedAnswersAll[index].forEach(ans => {
                 const p = document.createElement('p');
