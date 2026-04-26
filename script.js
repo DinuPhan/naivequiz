@@ -537,7 +537,13 @@ Please explain clearly and concisely why this option is correct or incorrect bas
                 const randomAccolade = ACCOLADES[Math.floor(Math.random() * ACCOLADES.length)];
                 resultDiv.innerText = randomAccolade;
                 resultDiv.classList.add('animate-congrats');
-                triggerCelebration(selectedBtn);
+                try {
+                    if (typeof triggerCelebration === 'function') {
+                        triggerCelebration(selectedBtn);
+                    }
+                } catch (e) {
+                    console.error('Celebration failed:', e);
+                }
 
                 if (currentQuizId !== 'fun') {
                     getProgress(qId).then(prevData => {
@@ -729,3 +735,27 @@ Please explain clearly and concisely why this option is correct or incorrect bas
         detailsSection.scrollIntoView({ behavior: 'smooth' });
     }
 });
+
+function triggerCelebration(button) {
+    const emojis = ['🎉', '✨', '🔥', '⭐', '🚀', '🧠', '✅'];
+    const rect = button.getBoundingClientRect();
+    const count = 10;
+
+    for (let i = 0; i < count; i++) {
+        const emoji = document.createElement('div');
+        emoji.className = 'floating-emoji';
+        emoji.innerText = emojis[Math.floor(Math.random() * emojis.length)];
+        
+        // Random position around the button
+        const x = rect.left + (Math.random() * rect.width);
+        const y = rect.top + (Math.random() * rect.height);
+        
+        emoji.style.left = `${x}px`;
+        emoji.style.top = `${y}px`;
+        
+        document.body.appendChild(emoji);
+        
+        // Cleanup after animation completes
+        setTimeout(() => emoji.remove(), 1200);
+    }
+}
