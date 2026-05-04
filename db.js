@@ -517,7 +517,7 @@ function renderNavbar(filterQuery = '') {
 
     return getQuizzes().then(quizzes => {
         // Clear skeleton loaders or existing items
-        navList.innerHTML = '';
+        navList.replaceChildren();
         
         const filteredQuizzes = fuzzySearch(quizzes, filterQuery);
 
@@ -530,15 +530,28 @@ function renderNavbar(filterQuery = '') {
         if (filteredQuizzes.length === 0) {
             const emptyState = document.createElement('div');
             emptyState.className = "flex flex-col items-center justify-center py-12 px-4 text-center space-y-3 animate-in fade-in duration-500";
-            emptyState.innerHTML = `
-                <div class="w-12 h-12 rounded-2xl bg-surface-container-highest flex items-center justify-center text-on-surface-variant/20">
-                    <span class="material-symbols-outlined text-3xl">search_off</span>
-                </div>
-                <div class="space-y-1">
-                    <p class="text-sm font-bold text-inverse-surface">No modules found</p>
-                    <p class="text-[11px] text-on-surface-variant/40 leading-tight">Try different keywords or check for typos.</p>
-                </div>
-            `;
+            
+            const iconDiv = document.createElement('div');
+            iconDiv.className = "w-12 h-12 rounded-2xl bg-surface-container-highest flex items-center justify-center text-on-surface-variant/20";
+            const iconSpan = document.createElement('span');
+            iconSpan.className = "material-symbols-outlined text-3xl";
+            iconSpan.textContent = "search_off";
+            iconDiv.appendChild(iconSpan);
+
+            const textDiv = document.createElement('div');
+            textDiv.className = "space-y-1";
+            const p1 = document.createElement('p');
+            p1.className = "text-sm font-bold text-inverse-surface";
+            p1.textContent = "No modules found";
+            const p2 = document.createElement('p');
+            p2.className = "text-[11px] text-on-surface-variant/40 leading-tight";
+            p2.textContent = "Try different keywords or check for typos.";
+            textDiv.appendChild(p1);
+            textDiv.appendChild(p2);
+
+            emptyState.appendChild(iconDiv);
+            emptyState.appendChild(textDiv);
+
             navList.appendChild(emptyState);
             return;
         }
@@ -594,30 +607,61 @@ function renderQuizShortcuts() {
         }
 
         wrapper.classList.remove('hidden');
-        shortcutsContainer.innerHTML = '';
+        shortcutsContainer.replaceChildren();
         
         // Smart Review Card (Amber Gradient) - ONLY if weakCount > 0
         if (weakCount > 0) {
             const reviewCard = document.createElement('div');
             reviewCard.className = `group block p-5 rounded-2xl border-2 border-transparent bg-gradient-to-br from-amber-500 to-orange-600 text-white shadow-xl shadow-amber-200/50 transition-all animate-in slide-in-from-left-5 duration-500 scale-100 active:scale-95 cursor-pointer md:col-span-2`;
-            reviewCard.innerHTML = `
-                <div class="flex items-start justify-between mb-4">
-                    <div class="p-2.5 rounded-xl bg-white/20 text-white backdrop-blur-md group-hover:rotate-12 transition-transform">
-                        <span class="material-symbols-outlined text-[24px]">psychology</span>
-                    </div>
-                    <div class="flex flex-col items-end">
-                        <span class="text-[10px] font-bold uppercase tracking-widest opacity-80">Smart Review</span>
-                        <span class="bg-white/20 px-2 py-0.5 rounded-full text-[10px] font-bold mt-1 backdrop-blur-sm" id="smart-review-count"></span>
-                    </div>
-                </div>
-                <h4 class="font-extrabold text-lg leading-tight">Master Your Weaknesses</h4>
-                <p class="text-sm opacity-90 mt-1">Personalized spaced-repetition session focused on your recently failed concepts.</p>
-                <div class="mt-4 flex items-center text-[10px] font-bold uppercase tracking-widest hover:translate-x-1 transition-transform">
-                    <span>Start Focused Session</span>
-                    <span class="material-symbols-outlined text-[14px] ml-1">bolt</span>
-                </div>
-            `;
-            reviewCard.querySelector('#smart-review-count').textContent = `${weakCount} Topics`;
+            
+            const flexDiv = document.createElement('div');
+            flexDiv.className = "flex items-start justify-between mb-4";
+            
+            const iconDiv = document.createElement('div');
+            iconDiv.className = "p-2.5 rounded-xl bg-white/20 text-white backdrop-blur-md group-hover:rotate-12 transition-transform";
+            const iconSpan = document.createElement('span');
+            iconSpan.className = "material-symbols-outlined text-[24px]";
+            iconSpan.textContent = "psychology";
+            iconDiv.appendChild(iconSpan);
+
+            const countContainer = document.createElement('div');
+            countContainer.className = "flex flex-col items-end";
+            const countLabel = document.createElement('span');
+            countLabel.className = "text-[10px] font-bold uppercase tracking-widest opacity-80";
+            countLabel.textContent = "Smart Review";
+            const countSpan = document.createElement('span');
+            countSpan.className = "bg-white/20 px-2 py-0.5 rounded-full text-[10px] font-bold mt-1 backdrop-blur-sm";
+            countSpan.id = "smart-review-count";
+            countSpan.textContent = `${weakCount} Topics`;
+            countContainer.appendChild(countLabel);
+            countContainer.appendChild(countSpan);
+            
+            flexDiv.appendChild(iconDiv);
+            flexDiv.appendChild(countContainer);
+
+            const h4 = document.createElement('h4');
+            h4.className = "font-extrabold text-lg leading-tight";
+            h4.textContent = "Master Your Weaknesses";
+
+            const pDesc = document.createElement('p');
+            pDesc.className = "text-sm opacity-90 mt-1";
+            pDesc.textContent = "Personalized spaced-repetition session focused on your recently failed concepts.";
+
+            const actionDiv = document.createElement('div');
+            actionDiv.className = "mt-4 flex items-center text-[10px] font-bold uppercase tracking-widest hover:translate-x-1 transition-transform";
+            const actionSpan1 = document.createElement('span');
+            actionSpan1.textContent = "Start Focused Session";
+            const actionSpan2 = document.createElement('span');
+            actionSpan2.className = "material-symbols-outlined text-[14px] ml-1";
+            actionSpan2.textContent = "bolt";
+            actionDiv.appendChild(actionSpan1);
+            actionDiv.appendChild(actionSpan2);
+
+            reviewCard.appendChild(flexDiv);
+            reviewCard.appendChild(h4);
+            reviewCard.appendChild(pDesc);
+            reviewCard.appendChild(actionDiv);
+
             reviewCard.onclick = () => window.location.href = 'quiz.html?mode=smart#mode=smart';
             shortcutsContainer.appendChild(reviewCard);
         }
@@ -625,19 +669,38 @@ function renderQuizShortcuts() {
         // Fun Mode Card
         const funCard = document.createElement('div');
         funCard.className = `group block p-5 rounded-2xl border-2 border-transparent bg-gradient-to-br from-primary to-secondary-container text-on-primary-container shadow-xl shadow-primary/20 transition-all animate-in zoom-in-95 duration-500 scale-100 active:scale-95 cursor-pointer`;
-        funCard.innerHTML = `
-            <div class="flex items-start justify-between mb-4">
-                <div class="p-2.5 rounded-xl bg-white/40 text-on-primary-container backdrop-blur-sm group-hover:rotate-12 transition-transform">
-                    <span class="material-symbols-outlined text-[20px]">cruelty_free</span>
-                </div>
-                <span class="text-[10px] font-bold uppercase tracking-widest opacity-80">Special Mode</span>
-            </div>
-            <h4 class="font-bold text-on-primary-container leading-tight transition-colors line-clamp-2">Fun Mode (Random 10)</h4>
-            <div class="mt-4 flex items-center text-[10px] font-bold uppercase tracking-widest text-on-primary-container opacity-80 group-hover:opacity-100 transition-all translate-y-2 group-hover:translate-y-0">
-                <span>Start Playing</span>
-                <span class="material-symbols-outlined text-[14px] ml-1">arrow_forward</span>
-            </div>
-        `;
+        
+        const fFlex = document.createElement('div');
+        fFlex.className = "flex items-start justify-between mb-4";
+        const fIconDiv = document.createElement('div');
+        fIconDiv.className = "p-2.5 rounded-xl bg-white/40 text-on-primary-container backdrop-blur-sm group-hover:rotate-12 transition-transform";
+        const fIconSpan = document.createElement('span');
+        fIconSpan.className = "material-symbols-outlined text-[20px]";
+        fIconSpan.textContent = "cruelty_free";
+        fIconDiv.appendChild(fIconSpan);
+        const fLabel = document.createElement('span');
+        fLabel.className = "text-[10px] font-bold uppercase tracking-widest opacity-80";
+        fLabel.textContent = "Special Mode";
+        fFlex.appendChild(fIconDiv);
+        fFlex.appendChild(fLabel);
+
+        const fH4 = document.createElement('h4');
+        fH4.className = "font-bold text-on-primary-container leading-tight transition-colors line-clamp-2";
+        fH4.textContent = "Fun Mode (Random 10)";
+
+        const fAction = document.createElement('div');
+        fAction.className = "mt-4 flex items-center text-[10px] font-bold uppercase tracking-widest text-on-primary-container opacity-80 group-hover:opacity-100 transition-all translate-y-2 group-hover:translate-y-0";
+        const fa1 = document.createElement('span');
+        fa1.textContent = "Start Playing";
+        const fa2 = document.createElement('span');
+        fa2.className = "material-symbols-outlined text-[14px] ml-1";
+        fa2.textContent = "arrow_forward";
+        fAction.appendChild(fa1);
+        fAction.appendChild(fa2);
+
+        funCard.appendChild(fFlex);
+        funCard.appendChild(fH4);
+        funCard.appendChild(fAction);
         funCard.onclick = () => window.location.href = 'quiz.html?mode=fun#mode=fun';
         shortcutsContainer.appendChild(funCard);
         
@@ -651,25 +714,46 @@ function renderQuizShortcuts() {
                 : 'bg-white border-black/5 hover:border-primary/20 hover:shadow-xl hover:shadow-primary/5'
             }`;
             
-            card.innerHTML = `
-                <div class="flex items-start justify-between mb-4">
-                    <div class="p-2.5 rounded-xl transition-all duration-300 ${
-                        isSelected ? 'bg-primary text-on-primary animate-pulse-ring' : 'bg-primary/5 text-primary group-hover:bg-primary group-hover:text-on-primary'
-                    }">
-                        <span class="material-symbols-outlined text-[20px]">${isSelected ? 'rocket_launch' : 'play_arrow'}</span>
-                    </div>
-                    <span class="text-[10px] font-bold uppercase tracking-widest opacity-30 group-hover:opacity-60 transition-opacity" id="card-id-${quiz.id}"></span>
-                </div>
-                <h4 class="font-bold text-inverse-surface leading-tight transition-colors line-clamp-2 ${isSelected ? 'text-primary' : 'group-hover:text-primary'}" id="card-title-${quiz.id}"></h4>
-                <div class="mt-4 flex items-center text-[10px] font-bold uppercase tracking-widest text-primary ${isSelected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100 transition-all translate-y-2 group-hover:translate-y-0'}">
-                    <span class="${isSelected ? 'animate-text-reveal' : ''}">${isSelected ? 'Click again to Start' : 'Select Module'}</span>
-                    <span class="material-symbols-outlined text-[14px] ml-1 ${isSelected ? 'animate-bounce' : ''}">
-                        ${isSelected ? 'arrow_forward' : 'chevron_right'}
-                    </span>
-                </div>
-            `;
-            card.querySelector(`#card-id-${quiz.id}`).textContent = `Quiz ID: ${quiz.id}`;
-            card.querySelector(`#card-title-${quiz.id}`).textContent = quiz.title;
+            const qFlex = document.createElement('div');
+            qFlex.className = "flex items-start justify-between mb-4";
+            
+            const qIconDiv = document.createElement('div');
+            qIconDiv.className = `p-2.5 rounded-xl transition-all duration-300 ${
+                isSelected ? 'bg-primary text-on-primary animate-pulse-ring' : 'bg-primary/5 text-primary group-hover:bg-primary group-hover:text-on-primary'
+            }`;
+            const qIconSpan = document.createElement('span');
+            qIconSpan.className = "material-symbols-outlined text-[20px]";
+            qIconSpan.textContent = isSelected ? 'rocket_launch' : 'play_arrow';
+            qIconDiv.appendChild(qIconSpan);
+
+            const qIdSpan = document.createElement('span');
+            qIdSpan.className = "text-[10px] font-bold uppercase tracking-widest opacity-30 group-hover:opacity-60 transition-opacity";
+            qIdSpan.textContent = `Quiz ID: ${quiz.id}`;
+
+            qFlex.appendChild(qIconDiv);
+            qFlex.appendChild(qIdSpan);
+
+            const qTitle = document.createElement('h4');
+            qTitle.className = `font-bold text-inverse-surface leading-tight transition-colors line-clamp-2 ${isSelected ? 'text-primary' : 'group-hover:text-primary'}`;
+            qTitle.textContent = quiz.title;
+
+            const qAction = document.createElement('div');
+            qAction.className = `mt-4 flex items-center text-[10px] font-bold uppercase tracking-widest text-primary ${isSelected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100 transition-all translate-y-2 group-hover:translate-y-0'}`;
+            
+            const qa1 = document.createElement('span');
+            if (isSelected) qa1.className = "animate-text-reveal";
+            qa1.textContent = isSelected ? 'Click again to Start' : 'Select Module';
+            
+            const qa2 = document.createElement('span');
+            qa2.className = `material-symbols-outlined text-[14px] ml-1 ${isSelected ? 'animate-bounce' : ''}`;
+            qa2.textContent = isSelected ? 'arrow_forward' : 'chevron_right';
+
+            qAction.appendChild(qa1);
+            qAction.appendChild(qa2);
+
+            card.appendChild(qFlex);
+            card.appendChild(qTitle);
+            card.appendChild(qAction);
 
             card.onclick = () => {
                 const isAlreadySelected = localStorage.getItem('selectedQuizId') === quiz.id.toString();

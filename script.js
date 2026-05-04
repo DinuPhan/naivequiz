@@ -404,10 +404,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 const aiBtn = document.createElement('button');
                 aiBtn.className = "ml-auto p-2 rounded-xl bg-surface-container-highest text-primary hover:bg-primary/20 transition-colors z-10 flex-shrink-0 group/ai relative hover:scale-110 active:scale-95";
-                aiBtn.innerHTML = `
-                    <span class="material-symbols-outlined text-[18px]">psychology_alt</span>
-                    <span class="absolute right-0 top-full mt-2 w-max px-2 py-1 bg-inverse-surface text-surface text-[10px] uppercase font-bold tracking-widest rounded opacity-0 group-hover/ai:opacity-100 transition-opacity pointer-events-none">Ask AI</span>
-                `;
+                
+                const iconSpan = document.createElement('span');
+                iconSpan.className = "material-symbols-outlined text-[18px]";
+                iconSpan.textContent = "psychology_alt";
+                
+                const tooltipSpan = document.createElement('span');
+                tooltipSpan.className = "absolute right-0 top-full mt-2 w-max px-2 py-1 bg-inverse-surface text-surface text-[10px] uppercase font-bold tracking-widest rounded opacity-0 group-hover/ai:opacity-100 transition-opacity pointer-events-none";
+                tooltipSpan.textContent = "Ask AI";
+                
+                aiBtn.appendChild(iconSpan);
+                aiBtn.appendChild(tooltipSpan);
                 aiBtn.onclick = (event) => {
                     event.stopPropagation();
                     event.preventDefault();
@@ -636,7 +643,7 @@ Please explain clearly and concisely why this option is correct or incorrect bas
         }
 
         const detailsTableBody = document.querySelector('#details-table tbody');
-        detailsTableBody.innerHTML = '';
+        detailsTableBody.replaceChildren();
 
         questionTextArr.forEach((question, index) => {
             const row = document.createElement('tr');
@@ -645,29 +652,56 @@ Please explain clearly and concisely why this option is correct or incorrect bas
 
             const currentQAll = questions[questionHistory[index]];
 
-            row.innerHTML = `
-                <td class="px-8 py-6">
-                    <div class="flex items-start space-x-3">
-                        <div class="mt-1 flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center ${isCorrect ? 'bg-success text-white' : 'bg-error text-white'}">
-                            <span class="material-symbols-outlined text-[14px] font-bold">${isCorrect ? 'check' : 'close'}</span>
-                        </div>
-                        <div>
-                            <div class="font-bold text-inverse-surface leading-tight mb-1" id="q-text-${index}"></div>
-                            <div class="text-[10px] uppercase tracking-wider font-bold opacity-30">Analytical Review</div>
-                            <button class="mt-3 text-xs font-bold text-primary flex items-center space-x-1 hover:bg-primary/10 px-3 py-1.5 rounded-lg transition-colors border border-primary/20 copy-ai-btn">
-                                <span class="material-symbols-outlined text-[14px]">psychology_alt</span>
-                                <span>Ask AI</span>
-                            </button>
-                        </div>
-                    </div>
-                </td>
-                <td class="px-6 py-6 text-sm">
-                    <div class="space-y-1" id="u-ans-${index}"></div>
-                </td>
-                <td class="px-8 py-6 text-sm text-right">
-                    <div class="space-y-1 opacity-60 inline-block text-left" id="c-ans-${index}"></div>
-                </td>
-            `;
+            const td1 = document.createElement('td');
+            td1.className = "px-8 py-6";
+            const div1 = document.createElement('div');
+            div1.className = "flex items-start space-x-3";
+            const iconDiv = document.createElement('div');
+            iconDiv.className = `mt-1 flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center ${isCorrect ? 'bg-success text-white' : 'bg-error text-white'}`;
+            const iconSpan = document.createElement('span');
+            iconSpan.className = "material-symbols-outlined text-[14px] font-bold";
+            iconSpan.textContent = isCorrect ? 'check' : 'close';
+            iconDiv.appendChild(iconSpan);
+            const contentDiv = document.createElement('div');
+            const qTextDiv = document.createElement('div');
+            qTextDiv.className = "font-bold text-inverse-surface leading-tight mb-1";
+            qTextDiv.id = `q-text-${index}`;
+            const labelDiv = document.createElement('div');
+            labelDiv.className = "text-[10px] uppercase tracking-wider font-bold opacity-30";
+            labelDiv.textContent = "Analytical Review";
+            const aiBtn = document.createElement('button');
+            aiBtn.className = "mt-3 text-xs font-bold text-primary flex items-center space-x-1 hover:bg-primary/10 px-3 py-1.5 rounded-lg transition-colors border border-primary/20 copy-ai-btn";
+            const btnIcon = document.createElement('span');
+            btnIcon.className = "material-symbols-outlined text-[14px]";
+            btnIcon.textContent = "psychology_alt";
+            const btnText = document.createElement('span');
+            btnText.textContent = "Ask AI";
+            aiBtn.appendChild(btnIcon);
+            aiBtn.appendChild(btnText);
+            contentDiv.appendChild(qTextDiv);
+            contentDiv.appendChild(labelDiv);
+            contentDiv.appendChild(aiBtn);
+            div1.appendChild(iconDiv);
+            div1.appendChild(contentDiv);
+            td1.appendChild(div1);
+
+            const td2 = document.createElement('td');
+            td2.className = "px-6 py-6 text-sm";
+            const uAnsDiv = document.createElement('div');
+            uAnsDiv.className = "space-y-1";
+            uAnsDiv.id = `u-ans-${index}`;
+            td2.appendChild(uAnsDiv);
+
+            const td3 = document.createElement('td');
+            td3.className = "px-8 py-6 text-sm text-right";
+            const cAnsDiv = document.createElement('div');
+            cAnsDiv.className = "space-y-1 opacity-60 inline-block text-left";
+            cAnsDiv.id = `c-ans-${index}`;
+            td3.appendChild(cAnsDiv);
+
+            row.appendChild(td1);
+            row.appendChild(td2);
+            row.appendChild(td3);
 
             const qTextElement = row.querySelector(`#q-text-${index}`);
             renderRichText(qTextElement, `${index + 1}. ${question}`);

@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://cdn.jsdelivr.net https://cdn.jsdelivr.net/npm/marked/marked.min.js https://cdn.jsdelivr.net/npm/dompurify/dist/purify.min.js https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.tailwindcss.com https://cdn.jsdelivr.net; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' https://cdn.jsdelivr.net;">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.tailwindcss.com https://cdn.jsdelivr.net https://cdn.jsdelivr.net/npm/marked/marked.min.js https://cdn.jsdelivr.net/npm/dompurify/dist/purify.min.js https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.tailwindcss.com https://cdn.jsdelivr.net; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' https://cdn.jsdelivr.net;">
     <title id="page-title">Loading Quiz... - Naive Quiz</title>
     <meta name="theme-color" content="#ffffff">
     <link rel="manifest" href="manifest.json">
@@ -21,34 +21,7 @@
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/dompurify/dist/purify.min.js"></script>
     <script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js"></script>
-    <script>
-        tailwind.config = {
-            darkMode: "class",
-            future: { hoverOnlyWhenSupported: true },
-            theme: {
-                extend: {
-                    colors: {
-                        primary: "#436700",
-                        "on-primary": "#ffffff",
-                        "primary-container": "#bef158",
-                        "on-primary-container": "#111f00",
-                        "secondary-container": "#ccf078",
-                        "on-secondary-fixed": "#151f00",
-                        surface: "#fff8ef",
-                        "surface-container-highest": "#e9e2d3",
-                        "on-surface-variant": "#4c473e",
-                        "inverse-surface": "#34302a",
-                        success: "#436700",
-                        error: "#ba1a1a"
-                    },
-                    fontFamily: {
-                        headline: ["Plus Jakarta Sans", "sans-serif"],
-                        body: ["Lexend", "sans-serif"]
-                    }
-                }
-            }
-        };
-    </script>
+    <script src="tailwind.config.js"></script>
     <style>
         body {
             font-family: 'Lexend', sans-serif;
@@ -408,95 +381,7 @@
     <script src="db.js?v=4"></script>
     <script src="sm2.js?v=4"></script>
     <script src="script.js?v=4"></script>
-    <script>
-        const toggleBtn = document.getElementById('sidebar-toggle');
-        const closeBtn = document.getElementById('sidebar-close');
-        const overlay = document.getElementById('sidebar-overlay');
-        const body = document.body;
-
-        function loadSidebarState() {
-            const isExpanded = localStorage.getItem('sidebarExpanded') === 'true';
-            if (window.innerWidth >= 1024 && isExpanded) {
-                body.classList.add('sidebar-expanded');
-            }
-        }
-
-        function toggleSidebar() {
-            body.classList.toggle('sidebar-expanded');
-            if (window.innerWidth >= 1024) {
-                localStorage.setItem('sidebarExpanded', body.classList.contains('sidebar-expanded'));
-            }
-        }
-
-        // Swipe Gestures for Mobile Sidebar
-        let touchStartX = 0;
-        let touchEndX = 0;
-
-        function handleSwipe() {
-            const SWIPE_THRESHOLD = 50;
-            const EDGE_THRESHOLD = 30; // pixels from left edge to start swipe-open
-            const isExpanded = body.classList.contains('sidebar-expanded');
-
-            if (touchEndX < touchStartX - SWIPE_THRESHOLD && isExpanded) {
-                // Swipe left to close
-                body.classList.remove('sidebar-expanded');
-            } else if (touchEndX > touchStartX + SWIPE_THRESHOLD && !isExpanded && touchStartX <= EDGE_THRESHOLD) {
-                // Swipe right from the left edge to open
-                body.classList.add('sidebar-expanded');
-            }
-        }
-
-        document.addEventListener('touchstart', e => {
-            touchStartX = e.changedTouches[0].screenX;
-        }, { passive: true });
-
-        document.addEventListener('touchend', e => {
-            touchEndX = e.changedTouches[0].screenX;
-            handleSwipe();
-        }, { passive: true });
-
-        toggleBtn?.addEventListener('click', toggleSidebar);
-        closeBtn?.addEventListener('click', () => body.classList.remove('sidebar-expanded'));
-        overlay?.addEventListener('click', () => body.classList.remove('sidebar-expanded'));
-
-        loadSidebarState();
-
-        if (mainTitle) {
-            observer.observe(mainTitle, { childList: true });
-        }
-
-        // Sidebar Search Logic
-        const searchInput = document.getElementById('sidebar-search');
-        const clearBtn = document.getElementById('clear-search');
-
-        function debounce(func, timeout = 300) {
-            let timer;
-            return (...args) => {
-                clearTimeout(timer);
-                timer = setTimeout(() => { func.apply(this, args); }, timeout);
-            };
-        }
-
-        const handleSearch = debounce((e) => {
-            const query = e.target.value;
-            renderNavbar(query);
-            
-            if (query.trim()) {
-                clearBtn.classList.remove('hidden');
-            } else {
-                clearBtn.classList.add('hidden');
-            }
-        }, 150);
-
-        searchInput?.addEventListener('input', handleSearch);
-
-        clearBtn?.addEventListener('click', () => {
-            searchInput.value = '';
-            clearBtn.classList.add('hidden');
-            renderNavbar('');
-            searchInput.focus();
-        });
-    </script>
+    <script src="ui.js"></script>
 </body>
 
 </html>
